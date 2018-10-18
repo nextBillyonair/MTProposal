@@ -84,7 +84,7 @@
 %------------------------------------------------------------------------------
 \DeclareMathOperator*{\argmax}{arg\,max}
 \newcommand{\qdist}[1]{\ifmmode\langle#1\rangle\else\textlangle#1\textrangle\fi}
-
+\renewcommand{\vec}[1]{\mathbf{#1}}
 
 \begin{document}
 
@@ -139,6 +139,7 @@ Additional inspiration comes from Variational Auto-Encoders (VAE).
 
 \section{Original Formulation}
 % Can steal shorten version from original paper! yay!
+% See if we can shorten or phrase it better. This should just be a reminder of what we did
 
 IBM Model 1 estimates the translation probabilities of the data through the EM algorithm\footnote{\url{http://mt-class.org/jhu/assets/papers/alopez-model1-tutorial.pdf}}. The EM algorithm is useful in discovering and learning the parameters of a latent variable model. 
 
@@ -177,17 +178,11 @@ This effectively gives us an alignment matrix that both models favor strongly, i
 % basically regurtiate (nicely) what was on board. Maybe make fancy diagrams and stuff.
 % also embeddings, positional, POS tagging, etc.
 
-Thank you Koehn, very cool!
+% refence fig 2
+\subsection{Inspiration}
+We can formulate the word alignment problem as a probabilistic model, similar to LDAs and VAEs.
 
-% alignment distirbution, i is target position, j is source position, lambda and null p_0
-\begin{equation}
-a(i, j \, | \, \lambda, p_0) =
-\begin{cases} 
-      p_0 & \text{if } null \\
-     (1-p_0) \cdot e^{-\lambda | \frac{i}{m} - \frac{j}{n}|} & \text{else}
-   \end{cases}
-\end{equation}
-
+\subsection{Alignment Distribution}
 
 \begin{figure}
 \centering
@@ -209,19 +204,60 @@ a(i, j \, | \, \lambda, p_0) =
   \plate [xscale=1.75, yscale=1.25] {t} {(a)(t)} {$\quad$} ;
 
 \end{tikzpicture}
-\caption{Probabilistic Plate Diagram for Word Alignment, where $t$ is target, $s$ is source, $\theta$ is the translation probability, $\lambda$ is a position parameter, $p_0$ is the null probability, and $a$ is the alignment distribution.}
+\caption{Our Probabilistic Plate Diagram for Word Alignment, where $t$ is target, $s$ is source, $\theta$ is the translation model, $\lambda$ is a position distortion parameter, $p_0$ is the null probability, and $a$ is the alignment distribution.}
 \end{figure}
+
+We can describe our alignment distribution as a function of target position $i$, source position $j$, and learnable parameters $\lambda$ and $p_0$. Here we define $\lambda$ as the alignment distortion parameter, and $p_0$ and the probability of aligning to the null token. From Dyer's paper, parameter values were selected as $\lambda=4$ and $p_0=0.08$ for the entire corpus, unlike our formulation which would allow the parameters to be updated via backpropagation. As a result, the alignment distribution $a$ can be formulated as such:
+
+% alignment distirbution, i is target position, j is source position, lambda and null p_0
+\begin{equation}
+a(i, j \, | \, \lambda, p_0) =
+\begin{cases} 
+      p_0 & \text{if } null \\
+     (1-p_0) \cdot e^{-\lambda | \frac{i}{m} - \frac{j}{n}|} & \text{else}
+   \end{cases}
+\end{equation}
+
+% talk about NN formulation, see hand notes
+\subsection{Neural Network Architecture}
+
+USEFUL EQUATIONS FOR FUTURE REFERENCE:
+
+Softmax:
+\begin{equation}
+Softmax(x_i) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
+\end{equation}
+\begin{equation}
+\sigma_i(\vec{x}) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
+\end{equation}
+Log Softmax: % effectively defines word embedding logprobs?
+\begin{equation}
+\log \left( Softmax(x_i) \right) = x_i - \log \left( \sum_j\exp(x_j) \right)
+\end{equation}
+\begin{equation}
+\log  \sigma_i(\vec{x})  = x_i - \log \left( \sum_j\exp(x_j) \right)
+\end{equation}
+
+% MIGHT BE USED
+For discrete probability distributions P and Q defined on the same probability space, the Kullback–Leibler (KL) divergence from Q to P is defined to be:
+\begin{equation}
+D _ { \mathrm { KL } } ( P \| Q ) = \sum _ { i } P ( i ) \log \left( \frac { P ( i ) } { Q ( i ) } \right)
+\end{equation}
+In other words, it is the expectation of the logarithmic difference between the probabilities P and Q, where the expectation is taken using the probabilities P. 
 
 \section{Data}
 % talk about subtitle extraction. Also labeling of data for supervised? Or should that go in supervised trainign section. Get Bailey to metnion Nikita metric for baseline on unaligned corpus.
 
 \section{Training}
+% discuss implementation ideas and why we feel like this will work.
 
 \subsection{Supervised Training}
-% cut out top half of model, talk about how we will label our data and incoropoate
+% cut out top part of model, talk about how we will label our data and incoropoate
 
 \subsection{Unsupervised Training}
 % 5 term loss function
+% most likely will be:
+% = prior f to e + prior e to f + logprob f to e + logprob e to f + alignemnt by agreement
 
 \section{Expectation}
 % Our Hopes and Dreams!
