@@ -1,3 +1,6 @@
+# macOS
+*.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -110,9 +113,12 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# LaTeX
 *.pdf
 *.aux
 *.synctex.gz
 *.out
 *.fls
 *.fdb_latexmk
+*.bbl
+*.blg
