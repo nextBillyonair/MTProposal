@@ -122,3 +122,5 @@ dmypy.json
 *.fdb_latexmk
 *.bbl
 *.blg
+# temporary (for tikz) because Slart is acting up
+*.code.tex
