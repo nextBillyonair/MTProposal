@@ -157,20 +157,19 @@ a(i, j, \lambda, p_0) =
 \begin{tikzpicture}
 
   % Define nodes
-  \node[obs]                               (y) {$t$};
-  \node[latent, above=0.75cm of y] (a) {$a$};
-  \node[latent, above=0.75cm of a, xshift=-0.6cm] (w) {$\lambda$};
-  \node[latent, above=0.75cm of a, xshift=0.6cm]  (x) {$p_0$};
-  \node[obs, right=0.75cm of y]            (t) {$s$};
-  \node[latent, below=0.95cm of y]            (theta) {$\theta$};
+  \node[obs]                               (t) {$t$};
+  \node[latent, above=0.75cm of t] (a) {$a$};
+  \node[latent, above=0.75cm of a, xshift=-0.6cm] (lambda) {$\lambda$};
+  \node[latent, above=0.75cm of a, xshift=0.6cm]  (null) {$p_0$};
+  \node[obs, right=0.75cm of t]            (s) {$s$};
+  \node[latent, below=0.95cm of t]            (theta) {$\theta$};
 
   % Connect the nodes
-  \edge {x,w} {a} ; %
-  \edge {a,t} {y} ; %
-  \edge {theta} {y} ; %
+  \edge {null,lambda} {a} ; %
+  \edge {a,s, theta} {t} ; %
 
   % Plates
-  \plate [xscale=1.75, yscale=1.25] {y} {(a)(y)} {$\quad$} ;
+  \plate [xscale=1.75, yscale=1.25] {t} {(a)(t)} {$\quad$} ;
 
 \end{tikzpicture}
 \caption{Probabilistic Plate Diagram for Word Alignment, where $t$ is target, $s$ is source, $\theta$ is the translation probability, $\lambda$ is a position parameter, $p_0$ is the null probability, and $a$ is the alignment distribution.}
