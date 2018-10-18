@@ -129,7 +129,8 @@ see apibm - apply tech to lda.\\
 \begin{figure*}
 \centering
 \includegraphics[scale=0.5]{LDADiagram}
-\caption{Graphical model representation of LDA. The boxes are “plates” representing replicates. The outer plate represents documents, while the inner plate represents the repeated choice of topics and words within a document. }
+% added to description; will probably update later (viv)
+\caption{Graphical model representation of LDA from \cite{blei2003latent}, for topic mixture $\theta$ (for a collection of $M$ documents); set $z$ of $N$ topics; set $w$ of $N$ words, and corpus-level parameters $\alpha$ and $\beta$. The boxes are ``plates'' representing replicates. The outer plate represents documents, while the inner plate represents the repeated choice of topics and words within a document. }
 \end{figure*}
 
 Current research attempts to supplant the probabilistic modeling with a neural network architecture. 
