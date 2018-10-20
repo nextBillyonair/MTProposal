@@ -182,7 +182,7 @@ This effectively gives us an alignment matrix that both models favor strongly, i
 \subsection{Inspiration}
 We can formulate the word alignment problem as a probabilistic model, similar to LDAs and VAEs.
 
-We want to use neural networks to encode words, create complex relations and functions to learn the parameters of the underlying distirbution to maximize some likelihood function. We intend to use PyTorch to implement the embedding layers, alignment distribution, and translation weights. In addition, we will encdoe this likelihood function as a loss function that the network will optimze its parameters for, with respect to the distirbution, formulation, and likelihood function.
+We want to use neural networks to predict alignments, create complex relations and functions to learn the parameters of the underlying distribution to maximize some likelihood function. We intend to use PyTorch to implement the embedding layers, alignment distribution, and translation weights. In addition, we will encode this likelihood function as a loss function that the network will optimize its parameters for, with respect to the distirbution, formulation, and likelihood function.
 
 \subsection{Alignment Distribution}
 
