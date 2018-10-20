@@ -234,15 +234,9 @@ USEFUL EQUATIONS FOR FUTURE REFERENCE:
 
 Softmax:
 \begin{equation}
-Softmax(x_i) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
-\end{equation}
-\begin{equation}
 \sigma_i(\vec{x}) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
 \end{equation}
 Log Softmax: % effectively defines word embedding logprobs?
-\begin{equation}
-\log \left( Softmax(x_i) \right) = x_i - \log \left( \sum_j\exp(x_j) \right)
-\end{equation}
 \begin{equation}
 \log  \sigma_i(\vec{x})  = x_i - \log \left( \sum_j\exp(x_j) \right)
 \end{equation}
@@ -266,6 +260,7 @@ In other words, it is the expectation of the logarithmic difference between the 
 \subsection{Unsupervised Training}
 % 5 term loss function
 % most likely will be:
+% priors are sim to KL div
 % = prior f to e + prior e to f + logprob f to e + logprob e to f + alignemnt by agreement
 
 \section{Expectation}
