@@ -182,7 +182,7 @@ This effectively gives us an alignment matrix that both models favor strongly, i
 \subsection{Inspiration}
 We can formulate the word alignment problem as a probabilistic model, similar to LDAs and VAEs.
 
-We want to use neural networks to encode words, create complex relations and functions to learn the parameters of the underlying distirbution to maximize some likelihood function. We intend to use PyTorch to implement the embedding layers, alignment distribution, and translation weights. In addition, we will encdoe this likelihood function as a loss function that the network will optimze its parameters for, with respect to the distirbution, formulation, and likelihood function.
+We want to use neural networks to predict alignments, create complex relations and functions to learn the parameters of the underlying distribution to maximize some likelihood function. We intend to use PyTorch to implement the embedding layers, alignment distribution, and translation weights. In addition, we will encode this likelihood function as a loss function that the network will optimize its parameters for, with respect to the distirbution, formulation, and likelihood function.
 
 \subsection{Alignment Distribution}
 
@@ -234,15 +234,9 @@ USEFUL EQUATIONS FOR FUTURE REFERENCE:
 
 Softmax:
 \begin{equation}
-Softmax(x_i) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
-\end{equation}
-\begin{equation}
 \sigma_i(\vec{x}) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
 \end{equation}
 Log Softmax: % effectively defines word embedding logprobs?
-\begin{equation}
-\log \left( Softmax(x_i) \right) = x_i - \log \left( \sum_j\exp(x_j) \right)
-\end{equation}
 \begin{equation}
 \log  \sigma_i(\vec{x})  = x_i - \log \left( \sum_j\exp(x_j) \right)
 \end{equation}
@@ -266,6 +260,7 @@ In other words, it is the expectation of the logarithmic difference between the 
 \subsection{Unsupervised Training}
 % 5 term loss function
 % most likely will be:
+% priors are sim to KL div
 % = prior f to e + prior e to f + logprob f to e + logprob e to f + alignemnt by agreement
 
 \section{Expectation}
