@@ -277,7 +277,7 @@ the pseudo M-Step evaluation (loss) function.
 
 This prediction network accepts two inputs, a target sentence $t$ and source
 sentence $s$. The network will then output an alignment matrix $\psi$, where
-each rows corresponds to a source word $s_i$ and each column corresponds to a
+each row corresponds to a source word $s_i$ and each column corresponds to a
 target word $t_i$. This will help in consistency of future operations.
 
 \begin{equation}
@@ -322,7 +322,7 @@ We have several ideas on how we can generate this alignment matrix $\psi$:
   \node[obs, above=0.85cm of a, xshift=-0.6cm] (t) {$t$};
   \node[obs, above=0.85cm of a, xshift=0.6cm] (s) {$s$};
   \node[latent, below=0.75cm of psi] (p) {$-\log p(t, s | \theta, \psi)$};
-  \node[latent, left=0.75cm of p] (kl) {$D_{\mathrm{KL}} ( \sigma_t(\psi) \| a_0)$};
+  \node[latent, left=0.75cm of p] (kl) {$D_{\mathrm{KL}} ( \sigma_t(\psi) \| a_t)$};
   \node[latent, right=0.75cm of psi] (theta) {$\theta$};
   \node[latent, below=0.95cm of p] (sum) {$\Sigma$};
   \node[latent, below=0.95cm of sum] (loss) {$Loss$};
@@ -458,7 +458,7 @@ probabilities $Q$.
 
 In order to calculate the KL divergence of our model, we must define
 distributions $P$ and $Q$. First, we consider $P$ as our prior
-distribution, henceforth called $a_0$. This prior distribution $a_0$ is a
+distribution, henceforth called $a_t$. This prior distribution $a_t$ is a
 $n \times m$ matrix filled with the alignment probabilities filled for a source
 word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target
 sentence $t$ of length $m$:
@@ -468,35 +468,37 @@ We define distortion exponent $h$ as:
   h(i, j) = {-\lambda \left| \frac{i}{n} - \frac{j}{m}\right|}
 \end{equation}
 
+% might have to flip this to be sum over i' not j' DONE
 \begin{equation}
-  Z_i = \sum_{j'} \exp h(i, j')
+  Z_j = \sum_{i'} \exp h(i', j)
 \end{equation}
 
 \begin{equation}
-a_0 (i, j) =
+a_t (i, j) =
 \begin{cases}
       p_0 & \text{if } null \\
-     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_i} & \text{else}
+     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_j} & \text{else}
    \end{cases}
 \end{equation}
 
 In \cite{dyer2013simple}, parameter values were selected as $\lambda=4$ and $p_0=0.08$
-for the entire corpus. Each row of $a_0$ is normalized by the sum of the row
-distortion values to create a valid distribution via term $Z_i$.
+for the entire corpus. Each element value of $a_t$ is normalized by the sum of the column
+distortion values to create a valid distribution via term $Z_j$ since we hold target $t_j$ constant. For future notation, we say that the subscript on the distirbution $a$ denotes the way we normalize, i.e. $a_t$ is the prior alignemnt distirbution normalized with respect to target words $t_j$ and thus normalized by the sum of the column for $t_j$.
+% TODO change?
 We can then write our KL Divergence, which is to be minimized, as:
 
 \begin{equation}
-  D_{\mathrm{KL}}(\sigma_t(\psi) \| a_0) =
+  D_{\mathrm{KL}}(\sigma_t(\psi) \| a_t) =
     \sum_i^n \sum_j^m \sigma_t(\psi)_{ij} \cdot
-      \log \left[ \frac{\sigma_t(\psi)_{ij}}{a_0(i, j)} \right]
+      \log \left[ \frac{\sigma_t(\psi)_{ij}}{a_t(i, j)} \right]
 \end{equation}
 
 
 \subsubsection{Target-to-Source Loss Terms}
 
 We have described the loss terms for a source $s$ to target $t$ word alignment.
-However, we seek to perform alignment by agreement. Hence we need to add loss
-functions that describe the evaluation of target $t$ to source $s$. Hence, we
+However, we seek to perform alignment by agreement. Hence, we need to add loss
+functions that describe the evaluation of target $t$ to source $s$. Thus, we
 add terms:
 
 \begin{equation}
@@ -514,11 +516,29 @@ add terms:
 And now for the KL Divergence term for target $t$ to source $s$:
 
 \begin{equation}
-D_{\mathrm{KL}} (\sigma_s(\psi) \| a_0) = \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}
-  \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_0(i, j)} \right]
+D_{\mathrm{KL}} (\sigma_s(\psi) \| a_s) = \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}
+  \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_s(i, j)} \right]
 \end{equation}
 
-Where the normalization of the prior $a_0$ is on the column instead of the row.
+Where the normalization of the prior $a_s$ is on the row instead of the column, i.e. we hold the source $s_i$ constant, sum the row, and divide each row element by the sum. The equations for $a_s$ are as follows:
+
+\begin{equation}
+  h(i, j) = {-\lambda \left| \frac{i}{n} - \frac{j}{m}\right|}
+\end{equation}
+
+% might have to flip this to be sum over i' not j' DONE
+\begin{equation}
+  Z_i = \sum_{j'} \exp h(i, j')
+\end{equation}
+
+\begin{equation}
+a_s (i, j) =
+\begin{cases}
+      p_0 & \text{if } null \\
+     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_i} & \text{else}
+   \end{cases}
+\end{equation}
+
 We also perform the softmax operator on each column of the $\psi$ matrix,
 previously defined as $\sigma_t(\psi)$
 
@@ -542,8 +562,8 @@ $(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
 \subsubsection{Combined Loss Function}
 
 Our final loss function, to be minimized, is a 5-term equation. We define $a_t$
-as the prior alignment matrix $a_0$ normalized per column, $a_s$ as the prior
-alignment matrix normalized per row, $\sigma_s$ as the softmax operator applied
+as the target prior alignment matrix $a_0$ normalized per row with respect to $s$, $a_s$ as the source prior
+alignment matrix normalized per column with respect to $t$, $\sigma_s$ as the softmax operator applied
 on the rows of a matrix, and $\sigma_t$ as the softmax operator applied to each
 column of a matrix. Indexing is done under the assumption that source words
 $s_i$ form rows, and target words $t_j$ form columns, and $ij$ is a shorthand
@@ -579,8 +599,8 @@ for $s_i$ and $t_j$ indexing into our matrices.
 
 \subsection{Prediction}
 
-For prediction, we can set a threshold for our alignment matrix $\psi$ and take
-it as our alignments.
+For prediction, we can set a threshold for our alignment matrix $\psi$ and
+return all alignments above this threshold.
 
 %------------------------------------------------------------------------------
 
@@ -596,20 +616,20 @@ it as our alignments.
 The efficacy of a neural network alignment system depends heavily on the
 quality and quantity of the training data available. We look to leverage
 existing corpora of natural language in various settings instead of the
-traditional corpora (such as the Europal, which are domain specific and lack
-the unstructured and informal nature of typical language use). Training on
-these commonly used corpora leads to models with preferences for emitting
-language of a parliamentary nature, for example. We elect to focus on corpora
-that provide more of a contextual breadth.
+traditional corpora (such as Europal, which is domain specific and lacks the
+unstructured and informal nature of typical language use). Training on these
+commonly used corpora leads to models with preferences for emitting language
+of a parliamentary nature, for example. We elect to focus on corpora that
+provide more of a contextual breadth.
 
-To this end, amassed a corpus of domestic and international movie and TV show
-subtitles from a variety of sources. Subtitles have the unique advantage of
-being already sentence-aligned thanks to timestamps. Additionally, this
+To this end, we amassed a corpus of domestic and international movie and TV
+show subtitles from a variety of sources. Subtitles have the unique advantage
+of being already sentence-aligned thanks to timestamps. Additionally, this
 alignment somewhat holds even if timestamps are skewed between different media
 formats of the same source with slightly different timings. We plan to handle
 subtitles in strict alignment (that is, those whose timestamps exactly
 correspond) and also will attempt to sentence-align those that are in fuzzy
-alignment (timestamps do not correspond one-to-one). For more on our
+alignment (where timestamps do not correspond one-to-one). For more on our
 methodology, see \hyperref[subsec:subtitle-alignment]{Subtitle Alignment}.
 
 Our preference was to collect only professional or official subtitles, but
@@ -622,7 +642,7 @@ tactics to obtain an initial corpus (see
 \hyperref[subsec:procuring-subtitles]{Procuring Subtitles}).
 
 For evaluating the effectiveness of our model and to facilitate
-\hyperref[sec:supervised-training]{Supervised Training} we need ground truth
+\hyperref[sec:supervised-training]{Supervised Training}, we need ground truth
 alignments of some subset of our corpus. As we later discuss, or corpus
 currently has 90 million English-French aligned subtitles (each approximately
 consisting of one sentence). This is, of course, impractical to align by hand
