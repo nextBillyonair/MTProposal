@@ -348,8 +348,8 @@ loss function to be minimized.}
 
 \subsection{Loss Functions}
 
-In order to create our loss functions, we have to turn our alignment matrix
-$\psi$ into a probability distribution. Let us define $\sigma(\vec{x})$ to be
+To create our loss functions, we convert our alignment matrix $\psi$
+to a probability distribution. Let us define $\sigma(\vec{x})$ to be
 the softmax operator applied on vector $\vec{x}$, and $\sigma(\vec{x})_i$ is
 the $x_i$ softmax probability for vector $\vec{x}$.
 
@@ -372,7 +372,7 @@ softmax on each column, i.e. $t_j$ target word.
 \right]
 \end{equation}
 
-In addition, we further define the target to source generation as
+In addition, we further define the target-to-source generation as
 $\sigma_s(\psi)$, where the softmax operator is applied on each row for target
 word $s_i$ and produces a row vector.
 \begin{equation}
@@ -387,15 +387,15 @@ word $s_i$ and produces a row vector.
 \right]
 \end{equation}
 
-While in VAEs you would sample from the probability distribution that is
-returned by the neural network, our model's distribution is discrete. Therefore
-we don't have to sample and instead can compute the loss in terms of all
-possibilities. We can now describe our loss functions.
+While VAEs sample from the probability distribution derived by the neural
+network, our model's distribution is discrete. Therefore, we need not
+sample and can instead compute the loss in terms of all possibilities.
 
+The following subsections describe our loss functions:
 
 \subsubsection{Probability Maximization}
 
-In the original formulation, we were maximizing our probabilities for word
+In the original formulation, we maximized probabilities for word
 alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
 
 \begin{equation}
@@ -406,12 +406,12 @@ alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
   \end{split}
 \end{equation}
 
-This formula stems from the fact that we are assuming the alignment per target
-word $t_j$ is independent of each other, hence a product over target words
-$t_j$. Then we sum over all the alignment possibilities from the source words
-$s_i$, thus marginalizing over the alignments.
+This formula stems from the fact that we are assuming the alignments for each
+target word $t_j$ are independent of each other, hence a product over target
+words $t_j$. Then we sum over all the alignment possibilities from the source
+words $s_i$, thus marginalizing over the alignments.
 
-However, we do not maximize in neural networks, and have to transform this
+However, we do not maximize in neural networks, and must thus transform this
 equation into a minimization problem by taking the negative logarithm of $p$.
 
 \begin{equation}
@@ -436,17 +436,16 @@ We can simplify this into the below, for easier implementation via PyTorch's
 \end{split}
 \end{equation}
 
-This is the term to be minimized for the source to target word alignment
+This is the term to be minimized for the source-to-target word alignment
 generation.
 
 
 \subsubsection{KL Divergence and Prior Terms}
 
-
 We also need to minimize the Kullback-Leibler (KL) divergence between our
 distribution and a prior. For discrete probability distributions $P$ and $Q$
 defined on the same probability space, the reverse KL divergence from $Q$ to
-$P$ is defined to be:
+$P$ is defined as:
 
 \begin{equation}
 D_{\mathrm{KL}}(Q \| P) = \sum_{i} Q(i) \log \left( \frac{Q(i)}{P(i)} \right)
@@ -456,9 +455,9 @@ In other words, it is the expectation of the logarithmic difference between the
 probabilities $P$ and $Q$, where the expectation is taken using the
 probabilities $Q$.
 
-In order to calculate the KL divergence of our model, we need to define what
-our distribution $P$ and $Q$ are. First, we will consider $P$ as our prior
-distribution, henceforth called $a_0$. Our prior distribution $a_0$ is a
+In order to calculate the KL divergence of our model, we must define
+distributions $P$ and $Q$. First, we consider $P$ as our prior
+distribution, henceforth called $a_0$. This prior distribution $a_0$ is a
 $n \times m$ matrix filled with the alignment probabilities filled for a source
 word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target
 sentence $t$ of length $m$:
@@ -480,11 +479,10 @@ a_0 (i, j) =
    \end{cases}
 \end{equation}
 
-From Dyer's paper, parameter values were selected as $\lambda=4$ and $p_0=0.08$
+In \cite{dyer2013simple}, parameter values were selected as $\lambda=4$ and $p_0=0.08$
 for the entire corpus. Each row of $a_0$ is normalized by the sum of the row
-distortion values to create a valid distribution via term $Z_i$
-\cite{dyer2013simple}. We can then write our KL Divergence, which is to be
-minimized:
+distortion values to create a valid distribution via term $Z_i$.
+We can then write our KL Divergence, which is to be minimized, as:
 
 \begin{equation}
   D_{\mathrm{KL}}(\sigma_t(\psi) \| a_0) =
@@ -493,7 +491,7 @@ minimized:
 \end{equation}
 
 
-\subsubsection{Source to Target Loss Terms}
+\subsubsection{Source-to-Target Loss Terms}
 
 We have described the loss terms for a source $s$ to target $t$ word alignment.
 However, we seek to perform alignment by agreement. Hence we need to add loss
@@ -542,7 +540,7 @@ $(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
 
 \subsubsection{Combined Loss Function}
 
-Our final loss function, to be minimized, is a 5 term equation. We define $a_t$
+Our final loss function, to be minimized, is a 5-term equation. We define $a_t$
 as the prior alignment matrix $a_0$ normalized per column, $a_s$ as the prior
 alignment matrix normalized per row, $\sigma_s$ as the softmax operator applied
 on the rows of a matrix, and $\sigma_t$ as the softmax operator applied to each
@@ -572,8 +570,8 @@ for $s_i$ and $t_j$ indexing into our matrices.
 \end{split}
 \end{equation}
 
-% Note, the alignment prior is not exactly the same for source to target and
-% target to source because even though the loss function is symmetric, the
+% Note, the alignment prior is not exactly the same for source-to-target and
+% target-to-source because even though the loss function is symmetric, the
 % probabilities are normalized with respect to n or m, depending which
 % direction you are translating
 
