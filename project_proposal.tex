@@ -168,6 +168,7 @@ distributions; VAEs use a neural network for this recognition model
 LDA, referred to as Autoencoded Variational Inference for Topic Model (AVITM).
 
 \begin{figure}
+\centering
 \includegraphics[scale=0.2]{VAEDiagram}
 \caption{Graphical model representation of VAE from \cite{kingma2013auto}. Solid lines denote the generative model $p_\theta(z) p_\theta(x|z)$; dashed lines denote the variational approximation $q_\phi(z|x)$ to the intractable posterior $p_\theta(z|x)$. The variational parameters $\phi$ are learned jointly with the generative model parameters $\theta$.
 }
