@@ -202,13 +202,13 @@ This effectively gives us an alignment matrix that both models favor strongly, i
 We will describe our model architecture to learn word alignments, along with our description of a combined loss function that will encode alignment by agreement for both source to target and target to source embeddings.
 
 % from a text from achintya, needs work
-While in VAEs you sample from the distribution, our model's distribution is discrete. Therefore we don’t have to sample and can compute in terms of all possibilities.
+% While in VAEs you sample from the distribution, our model's distribution is discrete. Therefore we don’t have to sample and can compute in terms of all possibilities.
 
 \subsection{Model Description}
 
 Our model will consist of two parts: the pseudo E-Step prediction network, and the pseudo M-Step evauation (loss) function.
 
-This prediciton network accepts two inputs, a target sentence $t$ and source sentence $s$. The network will then output an alignment matrix $\psi$, where each rows corresponds to a source word $s_i$ and each column corresponds to a target word $t_i$. This will help in consistency of future operations.
+This prediction network accepts two inputs, a target sentence $t$ and source sentence $s$. The network will then output an alignment matrix $\psi$, where each rows corresponds to a source word $s_i$ and each column corresponds to a target word $t_i$. This will help in consistency of future operations.
 
 \begin{equation}
   \centering
@@ -222,7 +222,7 @@ s_n  & \psi_{n1} & \hdots & \psi_{nj} & \hdots & \psi_{nm}
 \end{array}
 \end{equation}
 
-The prediction network mimics the E-Step by learning alignments and outputing a $\psi$ matrix that can be thought of as a smiliarity matrix for every target word $t_j$ and source word $s_i$. We define the length of the target sentence $|t| = m$ and the length of the source sentence as $|s|=n$. Hence the $\psi$ matrix is an $n \times m$ matrix containing measures of similiarty between the $j$-th target word and $i$-th source word.
+The prediction network mimics the E-Step by learning alignments and outputing a $\psi$ matrix that can be thought of as a similarity matrix for every target word $t_j$ and source word $s_i$. We define the length of the target sentence $|t| = m$ and the length of the source sentence as $|s|=n$. Hence the $\psi$ matrix is an $n \times m$ matrix containing measures of similiarty between the $j$-th target word and $i$-th source word.
 
 We have several ideas on how we can generate this alignment matrix $\psi$:
 \begin{enumerate}
@@ -271,21 +271,7 @@ In order to create our loss functions, we have to turn our alignment matrix $\ps
 \sigma(\vec{x})_i = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
 \end{equation}
 
-We therefore define two operations on the alignment matrix $\psi$. For source $s$ to target $t$ probability generations, we define $\sigma_s(\psi)$ as the softmax on each row, i.e. $s_i$ source word.
-
-\begin{equation}
-  \sigma_s(\psi) = \left[
-    \begin{matrix}
-      \sigma(\psi_{s_1})  \\
-      \vdots \\
-      \sigma(\psi_{s_i})  \\
-      \vdots \\
-      \sigma(\psi_{s_n})  \\
-    \end{matrix}
-\right]
-\end{equation}
-
-In addition, we further define the target to source generation as $\sigma_t(\psi)$, where the softmax operator is applied on each column for target word $t_j$ and produces a column vector.
+We therefore define two operations on the alignment matrix $\psi$. For source $s$ to target $t$ probability generations, we define $\sigma_t(\psi)$ as the softmax on each column, i.e. $t_j$ target word.
 \begin{equation}
   \sigma_t(\psi) = \left[
     \begin{matrix}
@@ -298,13 +284,55 @@ In addition, we further define the target to source generation as $\sigma_t(\psi
 \right]
 \end{equation}
 
+% \begin{equation}
+%   \sigma_s(\psi) = \left[
+%     \begin{matrix}
+%       \sigma(\psi_{s_1})  \\
+%       \vdots \\
+%       \sigma(\psi_{s_i})  \\
+%       \vdots \\
+%       \sigma(\psi_{s_n})  \\
+%     \end{matrix}
+% \right]
+% \end{equation}
+
+In addition, we further define the target to source generation as $\sigma_s(\psi)$, where the softmax operator is applied on each row for target word $s_i$ and produces a row vector.
+\begin{equation}
+  \sigma_s(\psi) = \left[
+    \begin{matrix}
+      \sigma(\psi_{s_1})  \\
+      \vdots \\
+      \sigma(\psi_{s_i})  \\
+      \vdots \\
+      \sigma(\psi_{s_n})  \\
+    \end{matrix}
+\right]
+\end{equation}
+
+While in VAEs you would sample from the probability distribution that is returned by the neural network, our model's distribution is discrete. Therefore we don’t have to sample and instead can compute the loss in terms of all possibilities.
+
+% \begin{equation}
+%   \sigma_t(\psi) = \left[
+%     \begin{matrix}
+%       \sigma(\psi_{t_1}) &
+%       \hdots &
+%       \sigma(\psi_{t_j}) &
+%       \hdots &
+%       \sigma(\psi_{t_m})  \\
+%     \end{matrix}
+% \right]
+% \end{equation}
+
 We can now describe our loss functions.
 
 \subsubsection{Probability Maximization}
 In the original formulation, we were maximizing our probabilites for word alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
 
 \begin{equation}
-  p(t, s | \theta, \psi) = \prod_j^{|t|} \sum_i^{|s|} \sigma_s(\theta(t_j, s_i)) \cdot \sigma_s(\psi)_{ij}
+  \begin{split}
+  p(t, s | \theta, \psi) &= \prod_j^{|t|} \sum_i^{|s|} p_\theta(t_j| s_i) \cdot p_a(i|j) \\
+  &= \prod_j^{|t|} \sum_i^{|s|} \sigma_t(\theta(t_j, s_i)) \cdot \sigma_t(\psi)_{ij}
+  \end{split}
 \end{equation}
 
 This formula stems from the fact that we are assuming the alignment per target word $t_j$ is independent of each other, hence a product over target words $t_j$. Then we sum over all the alignment possibilities from the source words $s_i$, thus marginalizing over the alignments.
@@ -332,15 +360,15 @@ This is the term to be minized for the source to target word alignment generatio
 
 \subsubsection{KL Divergence and Prior Terms}
 
-We also need to minimize the Kullback-Leibler (KL) divergence between our distribution and a prior. For discrete probability distributions $P$ and $Q$ defined on the same probability space, the KL divergence from $Q$ to $P$ is defined to be:
+We also need to minimize the Kullback-Leibler (KL) divergence between our distribution and a prior. For discrete probability distributions $P$ and $Q$ defined on the same probability space, the reverse KL divergence from $Q$ to $P$ is defined to be:
 
 \begin{equation}
-D _ { \mathrm { KL } } ( P \| Q ) = \sum _ { i } P ( i ) \log \left( \frac { P ( i ) } { Q ( i ) } \right)
+D _ { \mathrm { KL } } ( Q \| P ) = \sum _ { i } Q ( i ) \log \left( \frac { Q ( i ) } { P ( i ) } \right)
 \end{equation}
 
-In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation is taken using the probabilities $P$.
+In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation is taken using the probabilities $Q$.
 
-In order to calulate the KL divergence of our model, we need to define what our distirbutions $P$ and $Q$ are. First, we will consider $P$ as our prior distribution, henceforth called $a_0$. Our prior distribution $a_0$ is a $n \times m$ matrix filled with the alignment probabilities filled for a source word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target sentence $t$ of length $m$:
+In order to calulate the KL divergence of our model, we need to define what our distrubutions $P$ and $Q$ are. First, we will consider $P$ as our prior distribution, henceforth called $a_0$. Our prior distribution $a_0$ is a $n \times m$ matrix filled with the alignment probabilities filled for a source word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target sentence $t$ of length $m$:
 
 We define distortion exponent $h$ as:
 \begin{equation}
@@ -362,7 +390,7 @@ a_0 (i, j) =
 From Dyer's paper, parameter values were selected as $\lambda=4$ and $p_0=0.08$ for the entire corpus. Each row of $a_0$ is normalized by the sum of the row distortion values to create a valid distribution via term $Z_i$ \cite{dyer2013simple}. We can then write our KL Divergence, which is to be minimized:
 
 \begin{equation}
-  D_{\mathrm{KL}} ( a_0 \| \sigma_t(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_t(\psi)_{ij}} \right]
+  D_{\mathrm{KL}} (  \sigma_t(\psi) \| a_0) = \sum_i^n \sum_j^m \sigma_t(\psi)_{ij}  \cdot \log \left[ \frac{\sigma_t(\psi)_{ij}}{a_0(i, j)} \right]
 \end{equation}
 
 
@@ -381,7 +409,7 @@ We have described the loss terms for a source $s$ to target $t$ word alignment. 
 And now for the KL Divergence term for target $t$ to source $s$:
 
 \begin{equation}
-  D_{\mathrm{KL}} ( a_0 \| \sigma_s(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_s(\psi)_{ij}} \right]
+  D_{\mathrm{KL}} (  \sigma_s(\psi) \| a_0) = \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}  \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_0(i, j)} \right]
 \end{equation}
 
 Where the normalization of the prior $a_0$ is on the column instead of the row. We also perform the softmax operator on each column of the $\psi$ matrix, previously defined as $\sigma_t(\psi)$
@@ -393,6 +421,8 @@ Finally, one last loss function term must be added to jointly train each model. 
   -\log \sum_i^{|s|} \sum_j^{|t|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij}
 \end{equation}
 
+% Again note here, you can use logsumexp trick to implement this efficiently in PyTorch
+
 \subsubsection{Combined Loss Function}
 Our final loss function, to be minimized, is a 5 term equation. We define $a_t$ as the prior alignment matrix $a_0$ normalized per column, $a_s$ as the prior alignment matrix normalized per row, $\sigma_s$ as the softmax operator applied on the rows of a matrix, and $\sigma_t$ as the softmax operator applied to each column of a matrix. Indexing is done under the assumption that source words $s_i$ form rows, and target words $t_j$ form columns, and $ij$ is a shorthand for $s_i$ and $t_j$ indexing into our matricies.
 
@@ -401,12 +431,14 @@ Our final loss function, to be minimized, is a 5 term equation. We define $a_t$ 
 \begin{split}
   Lo&ss = \\
   &- \sum_j^{|t|} \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_t(\theta(t, s))_{ij} + \log \sigma_t(\psi)_{ij} \right) \right] \\
-  &+ \sum_i^{|s|} \sum_j^{|t|} a_{t_{ij}} \cdot \log \left[ \frac{a_{t_{ij}}}{\sigma_t(\psi)_{ij}} \right] \\
+  &+ \sum_i^n \sum_j^m \sigma_t(\psi)_{ij}  \cdot \log \left[ \frac{\sigma_t(\psi)_{ij}}{a_t(i, j)} \right] \\
   &- \sum_i^{|s|} \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_s(\theta(t, s))_{ij} + \log \sigma_s(\psi)_{ij} \right) \right] \\
-  &+ \sum_i^{|s|} \sum_j^{|t|} a_{s_{ij}} \cdot \log \left[ \frac{a_{s_{ij}}}{\sigma_s(\psi)_{ij}} \right] \\
+  &+ \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}  \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_s(i, j)} \right] \\
   &- \log \sum_i^{|s|} \sum_j^{|t|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij} \\
 \end{split}
 \end{equation}
+
+% Note, the alignment prior is not exactly the same for source to target and target to source because even though the loss function is symmetric, the probabilities are normalied with respect to n or m, depending which direction you are translating
 
 \subsection{Prediction}
 
