@@ -133,9 +133,9 @@ Dirichlet Allocation (LDA) models. LDA models are generative probabilistic
 models that model topics across distributions of words in a corpus. LDAs are
 based on variational methods and EM for Bayes parameter estimation.
 
-% exoand this section, and say that the work is inspiration to our approach
-% applying a NN to approximate the posterior distributions.\\
-% see apibm - apply tech to lda.\\
+% expand this section, and say that the work is inspiration to our approach
+% applying a NN to approximate the posterior distributions.
+% see apibm - apply tech to lda.
 \cite{blei2003latent}
 \cite{kingma2013auto}
 
@@ -158,7 +158,7 @@ network architecture.
 
 Additional inspiration comes from Variational Auto-Encoders (VAE).
 
-% Expand discussion on VAE and similiarity to our proposal. MAybe include VAE
+% Expand discussion on VAE and similarity to our proposal. Maybe include VAE
 % diagram.
 
 %------------------------------------------------------------------------------
@@ -272,7 +272,7 @@ agreement for both source-to-target and target-to-source embeddings.
 \subsection{Model Description}
 
 Our model will consist of two parts: the pseudo E-Step prediction network, and
-the pseudo M-Step evauation (loss) function.
+the pseudo M-Step evaluation (loss) function.
 
 This prediction network accepts two inputs, a target sentence $t$ and source
 sentence $s$. The network will then output an alignment matrix $\psi$, where
