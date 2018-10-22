@@ -206,7 +206,7 @@ algorithm
 which is useful in discovering and learning the parameters of a
 latent variable model.
 In the original IBM Model 1, we define the translation probability distribution
-as $\tau(t_i|s_j)$ for target word $t_i$ and source word $s_j$.
+as $\tau(t_j|s_i)$ for target word $t_j$ and source word $s_i$.
 
 Dyer et al. \cite{dyer2013simple} added an effective reparameterization
 of IBM Model 2 to produce alignment distribution $a$. We define (for a source
@@ -216,26 +216,26 @@ $\lambda$) this alignment distribution $a$ as follows:
 
 \begin{equation}
 \begin{split}
-h(i,j,m,n) = - \left| \frac{i}{m} - \frac{j}{n}\right| \\
+h(i,j,m,n) = - \left| \frac{i}{n} - \frac{j}{m}\right| \\
 \\
 a(i,j,m,n) =e^{  \lambda h(i,j,m,n)} \\
 \end{split}
 \end{equation}
 
 This formulation gives us a positionally-aware distribution that favors alignments
-towards the diagonal for a given source word $t_i$ and target word $s_j$. The
+towards the diagonal for a given source word $t_j$ and target word $s_i$. The
 precision parameter $\lambda$ controls how strongly the model prefers the
 diagonal.
 
 Once we are done training the model, to make an alignment guess, we must find
 the alignment that returns the maximum probability. For some alignment $a_i$:
 \begin{equation}
-\hat{a}_i = \argmax_{a_i} \, \tau(t_{a_i}|s_j) \cdot a(i, j, m, n)
+\hat{a}_j = \argmax_{a_j} \, \tau(t_{a_j}|s_i) \cdot a(i, j, m, n)
 \end{equation}
-where $\tau(t_{a_i}|s_j)$ is the translation probability, and an alignment
+where $\tau(t_{a_j}|s_i)$ is the translation probability, and an alignment
 distribution $a$ with parameters $\lambda$ and $p_0$. This will give us the
-English word $t_{a_i}$ that is the most likely translation of the French word
-$s_j$.
+English word $t_{a_j}$ that is the most likely translation of the French word
+$s_i$.
 
 Finally, incorporating the Alignment by Agreement model improvement was
 inspired by the work done by Liang et al. \cite{liang2006alignment}. However,
@@ -442,10 +442,10 @@ target word are conditionally independent, hence a product over target
 words $t_j$. We then sum over all the alignment possibilities from the source
 words $s_i$, thus marginalizing over the alignments.
 
-For $s \mapsto t$ alignments, alignments are softmaxed per column becuase we hold the target $t$ constant and iterate over the source $s$, hence $\sigma_s$.
+For $s \mapsto t$ alignments, alignments are softmaxed per column because we hold the target $t_j$ constant and iterate over the source $s_i$, hence $\sigma_t$.
 
 The translation probabilities are softmaxed per row (i.e., source word $s_i$) since we are given a source word
-and want to know the probability of translating $s_i$ to $t_j$, hence $\sigma_t$.
+and want to know the probability of translating $s_i$ to $t_j$, hence $\sigma_s$.
 
 However, as we do not maximize in neural networks, we must transform this
 equation into a minimization problem by taking the negative log of $p$:
