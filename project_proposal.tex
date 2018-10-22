@@ -321,7 +321,7 @@ We have several ideas on how we can generate this alignment matrix $\psi$:
   \node[obs, above=0.85cm of a, xshift=-0.6cm] (t) {$t$};
   \node[obs, above=0.85cm of a, xshift=0.6cm] (s) {$s$};
   \node[latent, below=0.75cm of psi] (p) {$-\log p(t, s | \theta, \psi)$};
-  \node[latent, left=0.75cm of p] (kl) {$D_{\mathrm{KL}} ( \sigma_t(\psi) \| a_0)$};
+  \node[latent, left=0.75cm of p] (kl) {$D_{\mathrm{KL}} ( \sigma_t(\psi) \| a_t)$};
   \node[latent, right=0.75cm of psi] (theta) {$\theta$};
   \node[latent, below=0.95cm of p] (sum) {$\Sigma$};
   \node[latent, below=0.95cm of sum] (loss) {$Loss$};
@@ -457,7 +457,7 @@ probabilities $Q$.
 
 In order to calculate the KL divergence of our model, we must define
 distributions $P$ and $Q$. First, we consider $P$ as our prior
-distribution, henceforth called $a_0$. This prior distribution $a_0$ is a
+distribution, henceforth called $a_t$. This prior distribution $a_t$ is a
 $n \times m$ matrix filled with the alignment probabilities filled for a source
 word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target
 sentence $t$ of length $m$:
@@ -467,27 +467,29 @@ We define distortion exponent $h$ as:
   h(i, j) = {-\lambda \left| \frac{i}{n} - \frac{j}{m}\right|}
 \end{equation}
 
+% might have to flip this to be sum over i' not j' DONE
 \begin{equation}
-  Z_i = \sum_{j'} \exp h(i, j')
+  Z_j = \sum_{i'} \exp h(i', j)
 \end{equation}
 
 \begin{equation}
-a_0 (i, j) =
+a_t (i, j) =
 \begin{cases}
       p_0 & \text{if } null \\
-     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_i} & \text{else}
+     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_j} & \text{else}
    \end{cases}
 \end{equation}
 
 In \cite{dyer2013simple}, parameter values were selected as $\lambda=4$ and $p_0=0.08$
-for the entire corpus. Each row of $a_0$ is normalized by the sum of the row
-distortion values to create a valid distribution via term $Z_i$.
+for the entire corpus. Each element value of $a_t$ is normalized by the sum of the column
+distortion values to create a valid distribution via term $Z_j$ since we hold target $t_j$ constant. For future notation, we say that the subscript on the distirbution $a$ denotes the way we normalize, i.e. $a_t$ is the prior alignemnt distirbution normalized with respect to target words $t_j$ and thus normalized by the sum of the column for $t_j$.
+% TODO change?
 We can then write our KL Divergence, which is to be minimized, as:
 
 \begin{equation}
-  D_{\mathrm{KL}}(\sigma_t(\psi) \| a_0) =
+  D_{\mathrm{KL}}(\sigma_t(\psi) \| a_t) =
     \sum_i^n \sum_j^m \sigma_t(\psi)_{ij} \cdot
-      \log \left[ \frac{\sigma_t(\psi)_{ij}}{a_0(i, j)} \right]
+      \log \left[ \frac{\sigma_t(\psi)_{ij}}{a_t(i, j)} \right]
 \end{equation}
 
 
@@ -513,11 +515,29 @@ add terms:
 And now for the KL Divergence term for target $t$ to source $s$:
 
 \begin{equation}
-D_{\mathrm{KL}} (\sigma_s(\psi) \| a_0) = \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}
-  \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_0(i, j)} \right]
+D_{\mathrm{KL}} (\sigma_s(\psi) \| a_s) = \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}
+  \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_s(i, j)} \right]
 \end{equation}
 
-Where the normalization of the prior $a_0$ is on the column instead of the row.
+Where the normalization of the prior $a_s$ is on the row instead of the column, i.e. we hold the source $s_i$ constant, sum the row, and divide each row element by the sum. The equations for $a_s$ are as follows:
+
+\begin{equation}
+  h(i, j) = {-\lambda \left| \frac{i}{n} - \frac{j}{m}\right|}
+\end{equation}
+
+% might have to flip this to be sum over i' not j' DONE
+\begin{equation}
+  Z_i = \sum_{j'} \exp h(i, j')
+\end{equation}
+
+\begin{equation}
+a_s (i, j) =
+\begin{cases}
+      p_0 & \text{if } null \\
+     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_i} & \text{else}
+   \end{cases}
+\end{equation}
+
 We also perform the softmax operator on each column of the $\psi$ matrix,
 previously defined as $\sigma_t(\psi)$
 
@@ -541,8 +561,8 @@ $(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
 \subsubsection{Combined Loss Function}
 
 Our final loss function, to be minimized, is a 5-term equation. We define $a_t$
-as the prior alignment matrix $a_0$ normalized per column, $a_s$ as the prior
-alignment matrix normalized per row, $\sigma_s$ as the softmax operator applied
+as the target prior alignment matrix $a_0$ normalized per row with respect to $s$, $a_s$ as the source prior
+alignment matrix normalized per column with respect to $t$, $\sigma_s$ as the softmax operator applied
 on the rows of a matrix, and $\sigma_t$ as the softmax operator applied to each
 column of a matrix. Indexing is done under the assumption that source words
 $s_i$ form rows, and target words $t_j$ form columns, and $ij$ is a shorthand
