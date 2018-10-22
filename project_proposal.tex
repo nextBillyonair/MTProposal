@@ -277,7 +277,7 @@ the pseudo M-Step evaluation (loss) function.
 
 This prediction network accepts two inputs, a target sentence $t$ and source
 sentence $s$. The network will then output an alignment matrix $\psi$, where
-each rows corresponds to a source word $s_i$ and each column corresponds to a
+each row corresponds to a source word $s_i$ and each column corresponds to a
 target word $t_i$. This will help in consistency of future operations.
 
 \begin{equation}
@@ -497,8 +497,8 @@ We can then write our KL Divergence, which is to be minimized, as:
 \subsubsection{Target-to-Source Loss Terms}
 
 We have described the loss terms for a source $s$ to target $t$ word alignment.
-However, we seek to perform alignment by agreement. Hence we need to add loss
-functions that describe the evaluation of target $t$ to source $s$. Hence, we
+However, we seek to perform alignment by agreement. Hence, we need to add loss
+functions that describe the evaluation of target $t$ to source $s$. Thus, we
 add terms:
 
 \begin{equation}
@@ -599,8 +599,8 @@ for $s_i$ and $t_j$ indexing into our matrices.
 
 \subsection{Prediction}
 
-For prediction, we can set a threshold for our alignment matrix $\psi$ and take
-it as our alignments.
+For prediction, we can set a threshold for our alignment matrix $\psi$ and
+return all alignments above this threshold.
 
 %------------------------------------------------------------------------------
 
@@ -616,20 +616,20 @@ it as our alignments.
 The efficacy of a neural network alignment system depends heavily on the
 quality and quantity of the training data available. We look to leverage
 existing corpora of natural language in various settings instead of the
-traditional corpora (such as the Europal, which are domain specific and lack
-the unstructured and informal nature of typical language use). Training on
-these commonly used corpora leads to models with preferences for emitting
-language of a parliamentary nature, for example. We elect to focus on corpora
-that provide more of a contextual breadth.
+traditional corpora (such as Europal, which is domain specific and lacks the
+unstructured and informal nature of typical language use). Training on these
+commonly used corpora leads to models with preferences for emitting language
+of a parliamentary nature, for example. We elect to focus on corpora that
+provide more of a contextual breadth.
 
-To this end, amassed a corpus of domestic and international movie and TV show
-subtitles from a variety of sources. Subtitles have the unique advantage of
-being already sentence-aligned thanks to timestamps. Additionally, this
+To this end, we amassed a corpus of domestic and international movie and TV
+show subtitles from a variety of sources. Subtitles have the unique advantage
+of being already sentence-aligned thanks to timestamps. Additionally, this
 alignment somewhat holds even if timestamps are skewed between different media
 formats of the same source with slightly different timings. We plan to handle
 subtitles in strict alignment (that is, those whose timestamps exactly
 correspond) and also will attempt to sentence-align those that are in fuzzy
-alignment (timestamps do not correspond one-to-one). For more on our
+alignment (where timestamps do not correspond one-to-one). For more on our
 methodology, see \hyperref[subsec:subtitle-alignment]{Subtitle Alignment}.
 
 Our preference was to collect only professional or official subtitles, but
@@ -642,7 +642,7 @@ tactics to obtain an initial corpus (see
 \hyperref[subsec:procuring-subtitles]{Procuring Subtitles}).
 
 For evaluating the effectiveness of our model and to facilitate
-\hyperref[sec:supervised-training]{Supervised Training} we need ground truth
+\hyperref[sec:supervised-training]{Supervised Training}, we need ground truth
 alignments of some subset of our corpus. As we later discuss, or corpus
 currently has 90 million English-French aligned subtitles (each approximately
 consisting of one sentence). This is, of course, impractical to align by hand
