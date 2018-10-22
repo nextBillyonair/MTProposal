@@ -402,14 +402,14 @@ alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
   \begin{split}
   p(t, s | \theta, \psi)
     &= \prod_j^{|t|} \sum_i^{|s|} p_\theta(t_j| s_i) \cdot p_a(i|j) \\
-    &= \prod_j^{|t|} \sum_i^{|s|} \sigma_t(\theta(t_j, s_i)) \cdot \sigma_t(\psi)_{ij}
+    &= \prod_j^{|t|} \sum_i^{|s|} \sigma_s(\theta(t_j, s_i)) \cdot \sigma_t(\psi)_{ij}
   \end{split}
 \end{equation}
 
 This formula stems from the fact that we are assuming the alignments for each
 target word $t_j$ are independent of each other, hence a product over target
 words $t_j$. Then we sum over all the alignment possibilities from the source
-words $s_i$, thus marginalizing over the alignments.
+words $s_i$, thus marginalizing over the alignments. For $s \mapsto t$ alignments, alignments are softmaxed per column becuase we hold the target $t$ constant and iterate over the source $s$, hence $\sigma_s$. The translation probabilities are softmaxed per row, or source word $s_i$ since we are given a source word, and want to know whats the probability of translating $s_i$ to the target word $t_j$, hence $\sigma_t$.
 
 However, we do not maximize in neural networks, and must thus transform this
 equation into a minimization problem by taking the negative logarithm of $p$.
@@ -418,7 +418,7 @@ equation into a minimization problem by taking the negative logarithm of $p$.
   \begin{split}
   -\log p(t, & s | \theta, \psi) = \\
   - \sum_j^{|t|}
-    & \log \left[ \sum_i^{|s|} \sigma_t \left( \theta(t_j, s_i) \right) \cdot
+    & \log \left[ \sum_i^{|s|} \sigma_s \left( \theta(t_j, s_i) \right) \cdot
       \sigma_t(\psi)_{ij} \right]
 \end{split}
 \end{equation}
@@ -431,7 +431,7 @@ We can simplify this into the below, for easier implementation via PyTorch's
   \begin{split}
   -\log  p(t & , s | \theta, \psi) = \\
   - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \exp
-      \left( \log \sigma_t(\theta(t_j, s_i)) + \log \sigma_t(\psi)_{ij} \right)
+      \left( \log \sigma_s(\theta(t_j, s_i)) + \log \sigma_t(\psi)_{ij} \right)
     \right]
 \end{split}
 \end{equation}
@@ -504,7 +504,7 @@ add terms:
   -\log  p(t & , s | \theta, \psi) = \\
   - \sum_i^{|s|} & \log \left[ \sum_j^{|t|}
       \exp \left(
-        \log \sigma_s(\theta(t_j, s_i)) + \log \sigma_s(\psi)_{ij}
+        \log \sigma_t(\theta(t_j, s_i)) + \log \sigma_s(\psi)_{ij}
       \right)
     \right]
 \end{split}
@@ -554,13 +554,13 @@ for $s_i$ and $t_j$ indexing into our matrices.
   Lo&ss = \\
   &- \sum_j^{|t|} \log \left[
       \sum_i^{|s|} \exp \left(
-        \log \sigma_t(\theta(t, s))_{ij} + \log \sigma_t(\psi)_{ij} \right)
+        \log \sigma_s(\theta(t, s))_{ij} + \log \sigma_t(\psi)_{ij} \right)
     \right] \\
   &+ \sum_i^n \sum_j^m \sigma_t(\psi)_{ij} \cdot \log \left[
     \frac{\sigma_t(\psi)_{ij}}{a_t(i, j)} \right] \\
   &- \sum_i^{|s|} \log \left[ \sum_j^{|t|}
       \exp \left(
-        \log \sigma_s(\theta(t, s))_{ij} + \log \sigma_s(\psi)_{ij}
+        \log \sigma_t(\theta(t, s))_{ij} + \log \sigma_s(\psi)_{ij}
       \right)
     \right] \\
   &+ \sum_i^n \sum_j^m \sigma_s(\psi)_{ij} \cdot \log \left[
