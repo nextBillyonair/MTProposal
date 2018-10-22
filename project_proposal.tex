@@ -146,13 +146,32 @@ and EM for Bayes parameter estimation \cite{blei2003latent}.
 \cite{hasler2014dynamic} present a bilingual variant of LDA, called
 ``phrasal LDA,'' for phrase-based machine translation.
 
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{LDADiagram}
+% added to description; will probably update later (viv)
+\caption{Graphical model representation of LDA from \cite{blei2003latent}, for
+topic mixture $\theta$ (for a collection of $M$ documents); set $z$ of $N$
+topics; set $w$ of $N$ words, and corpus-level parameters $\alpha$ and $\beta$.
+The boxes are ``plates'' representing replicates. The outer plate represents
+documents, while the inner plate represents the repeated choice of topics and
+words within a document.}
+\end{figure}
+
 We additionally draw inspiration from the Autoencoding Variational Bayes (AEVB)
 algorithm, particularly as instantiated by the Variational Autoencoder (VAE).
 Based on variational inference, AEVB increases efficiency w.r.t. inference and
 learning by optimizing a recognition model to approximate posterior
-distributions; VAEs use a neural network for this recognition model \cite{kingma2013auto}.
+distributions; VAEs use a neural network for this recognition model
+\cite{kingma2013auto}.
 \cite{srivastava2017autoencoding} present an AEVB-based inference method for
 LDA, referred to as Autoencoded Variational Inference for Topic Model (AVITM).
+
+\begin{figure}
+\includegraphics[scale=0.2]{VAEDiagram}
+\caption{Graphical model representation of VAE from \cite{kingma2013auto}. Solid lines denote the generative model $p_\theta(z) p_\theta(x|z)$; dashed lines denote the variational approximation $q_\phi(z|x)$ to the intractable posterior $p_\theta(z|x)$. The variational parameters $\phi$ are learned jointly with the generative model parameters $\theta$.
+}
+\end{figure}
 
 % VAEs are notable as a popular approach to unsupervised learning and have the
 % benefit of being built on neural networks % +trainable via stoch. grad. descent
@@ -169,22 +188,6 @@ LDA, referred to as Autoencoded Variational Inference for Topic Model (AVITM).
 % Current research attempts to supplant the probabilistic modeling with a
 % neural network architecture.
 
-% Expand discussion on VAE and similarity to our proposal. Maybe include VAE
-% diagram.
-
-% INSERT GRAPHIC OF PLATE DIAGRAM FOR LDA HERE!
-% Also cite LDA paper.
-\begin{figure*}
-\centering
-\includegraphics[scale=0.5]{LDADiagram}
-% added to description; will probably update later (viv)
-\caption{Graphical model representation of LDA from \cite{blei2003latent}, for
-topic mixture $\theta$ (for a collection of $M$ documents); set $z$ of $N$
-topics; set $w$ of $N$ words, and corpus-level parameters $\alpha$ and $\beta$.
-The boxes are ``plates'' representing replicates. The outer plate represents
-documents, while the inner plate represents the repeated choice of topics and
-words within a document.}
-\end{figure*}
 
 %------------------------------------------------------------------------------
 
