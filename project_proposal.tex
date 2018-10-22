@@ -94,44 +94,48 @@ Word Alignments}
 % \noindent \blindtext
 We seek to explore the word alignment problem with the help of neural networks.
 More specifically, we want to see if the original Expectation-Maximization
-(EM) approach to word alignment can be transcribed as a neural network in a
-supervised and unsupervised setting.
+(EM) approach to word alignment can be transcribed as a neural network in both
+supervised and unsupervised settings.
 \end{abstract}
 
-% REMEMBER IDEA IS TO COPY PROPOSAL INTO FINAL WRITEUP
+% REMEMBER: IDEA IS TO COPY PROPOSAL INTO FINAL WRITEUP
 
 %------------------------------------------------------------------------------
 
 \section{Introduction}
 
-% WHAT IS OUR METRIC!!!
+% \todo: what is our metric?
 Word Alignment seeks to match individual words in a parallel corpus such that
-the Alignment Error Rate (AER) is minimized. In a previous assignment, our task
-was to implement IBM Model 1, based on the Expectation-Maximization (EM)
-algorithm. Following IBM Model 1, we implemented a reparametrization of IBM
-Model 2 that favors alignments along the diagonal. Finally, we implemented an
-Alignment by Agreement Model that trained a French to English and English to
-French model and combined the results to make better alignments.
+the Alignment Error Rate (AER) is minimized. In a previous assignment, we
+implemented IBM Model 1, based on the Expectation-Maximization (EM)
+algorithm. We then implemented a reparametrization of IBM Model 2 that favors
+alignments along the diagonal. Finally, we implemented an
+Alignment by Agreement Model that trained French-to-English and English-to-
+French models and combined the results to produce better alignments.
 
-Our proposal for this project is to replace the EM algorithm and
-reparametrization of IBM Model 2 with a neural network architecture. In
-addition, the model will incorporate Alignment by Agreement. We will use
-PyTorch to build the model and loss functions. The key concept is that we can
-create a loss function that the network will learn the optimal parameters to
+Our current proposal is to replace the EM algorithm and
+reparametrization of IBM Model 2 with a neural network architecture. Our new
+model will additionally incorporate Alignment by Agreement. We will use
+PyTorch to build the model and loss functions.
+
+% rephrase
+The key concept lies in defining a loss function that the network will learn
+the optimal parameters to
 learn word alignments from a corpus of parallel text.
 
 %------------------------------------------------------------------------------
 
 \section{Background}
 
+% mention Hasler et al. (2014), BiTAM
 Our approach is inspired by current research in topic modeling with Latent
 Dirichlet Allocation (LDA) models. LDA models are generative probabilistic
 models that model topics across distributions of words in a corpus. LDAs are
 based on variational methods and EM for Bayes parameter estimation.
 
 % exoand this section, and say that the work is inspiration to our approach
-applying a NN to approximate the posterior distributions.\\
-see apibm - apply tech to lda.\\
+% applying a NN to approximate the posterior distributions.\\
+% see apibm - apply tech to lda.\\
 \cite{blei2003latent}
 \cite{kingma2013auto}
 
@@ -171,11 +175,11 @@ The EM algorithm is useful in discovering and learning the parameters of a
 latent variable model. In the original IBM Model 1, this is the translation
 probability distribution $t(e_i|f_j)$.
 
-The work of Dyer et al. \cite{dyer2013simple} added an effective
-reparameterization of IBM Model 2 to give an alignment distribution $a$. We
-define for a French sentence \textbf{f} of length $n = |\textbf{f}|$, an
-English sentence \textbf{e} of length $m=|\textbf{e}|$, with precision
-parameter $\lambda$, the alignment distribution $a$ as follows:
+Dyer et al. \cite{dyer2013simple} added an effective reparameterization
+of IBM Model 2 to produce alignment distribution $a$. We define (for a French
+sentence \textbf{f} of length $n = |\textbf{f}|$, an English sentence \textbf{e}
+of length $m=|\textbf{e}|$, with precision parameter $\lambda$) this alignment
+distribution $a$ as follows:
 
 \begin{equation}
 \begin{split}
@@ -185,7 +189,7 @@ a(i,j,m,n) =e^{  \lambda h(i,j,m,n)} \\
 \end{split}
 \end{equation}
 
-This formulation gives us a position aware distribution that favors alignments
+This formulation gives us a positionally-aware distribution that favors alignments
 towards the diagonal for a given English word $e_i$ and French word $f_j$. The
 precision parameter $\lambda$ controls how strongly the model prefers the
 diagonal.
@@ -207,18 +211,20 @@ the \texttt{Grow-Diag-Final} Alignment Heuristic by the Moses Statistical
 Translation
 System\footnote{\url{http://www.statmt.org/moses/?n=FactoredTraining.AlignWords}}.
 
-We trained an EM model in both directions, one for English to French,
-$A_{E \rightarrow F}$, and another for French to English,
+We trained an EM model in both directions, one for English-to-French,
+$A_{E \rightarrow F}$, and another for French-to-English,
 $A_{F \rightarrow E}$. Using the alignments generated by each individual model,
-we then proceed to take the intersection of each model's alignments.
+we then took the intersection of each model's alignments.
+
 \begin{equation}
 Intersection = A_{E \rightarrow F} \, \bigcap \, A_{F \rightarrow E}
 \end{equation}
 \begin{equation}
 Union = A_{E \rightarrow F} \, \bigcup \, A_{F \rightarrow E}
 \end{equation}
-This effectively gives us an alignment matrix that both models favor strongly,
-i.e. agree on. From this intersection matrix, we can then use the
+
+This effectively gave an alignment matrix that both models favored strongly
+(i.e., agreed on). From this intersection matrix, we then used the
 \texttt{GROW-DIAG-FINAL} algorithm to fill in the remaining gaps from the union
 of alignments.
 
@@ -242,7 +248,7 @@ of alignments.
   \plate [xscale=1.75, yscale=1.25] {t} {(a)(t)} {$\quad$} ;
 
 \end{tikzpicture}
-\caption{Our Probabilistic Plate Diagram for Word Alignment, where $t$ is
+\caption{Our probabilistic plate diagram for word alignment, where $t$ is
 target, $s$ is source, $\theta$ is the translation model, $\lambda$ is a
 position distortion parameter, $p_0$ is the null probability, and $a$ is the
 alignment distribution.}
@@ -253,9 +259,9 @@ alignment distribution.}
 % talk about NN formulation, see hand notes
 \section{Neural Network Architecture}
 
-We will describe our model architecture to learn word alignments, along with
-our description of a combined loss function that will encode alignment by
-agreement for both source to target and target to source embeddings.
+We describe our model architecture to learn word alignments, along with
+a combined loss function that will encode alignment by
+agreement for both source-to-target and target-to-source embeddings.
 
 % from a text from achintya, needs work
 % While in VAEs you sample from the distribution, our model's distribution is
