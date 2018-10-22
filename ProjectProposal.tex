@@ -307,12 +307,14 @@ In the original formulation, we were maximizing our probabilites for word alignm
   p(t, s | \theta, \psi) = \prod_j^{|t|} \sum_i^{|s|} \sigma_s(\theta(t_j, s_i)) \cdot \sigma_s(\psi)_{ij}
 \end{equation}
 
+This formula stems from the fact that we are assuming the alignment per target word $t_j$ is independent of each other, hence a product over target words $t_j$. Then we sum over all the alignment possibilities from the source words $s_i$, thus marginalizing over the alignments.
+
 However, we do not maximize in neural networks, and have to transform this equation into a minimization problem by taking the negative logarithm of $p$.
 
 \begin{equation}
   \begin{split}
   -\log p(t, & s | \theta, \psi) = \\
-  - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \sigma_s \left( \theta(t_j, s_i) \right) \cdot \sigma_s(\psi)_{ij} \right]
+  - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \sigma_t \left( \theta(t_j, s_i) \right) \cdot \sigma_t(\psi)_{ij} \right]
 \end{split}
 \end{equation}
 
@@ -322,7 +324,7 @@ We can simplify this into the below, for easier implmentation via PyTorch's \tex
   \centering
   \begin{split}
   -\log  p(t & , s | \theta, \psi) = \\
-  - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_s(\theta(t_j, s_i)) + \log \sigma_s(\psi)_{ij} \right) \right]
+  - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_t(\theta(t_j, s_i)) + \log \sigma_t(\psi)_{ij} \right) \right]
 \end{split}
 \end{equation}
 
@@ -360,7 +362,7 @@ a_0 (i, j) =
 From Dyer's paper, parameter values were selected as $\lambda=4$ and $p_0=0.08$ for the entire corpus. Each row of $a_0$ is normalized by the sum of the row distortion values to create a valid distribution via term $Z_i$ \cite{dyer2013simple}. We can then write our KL Divergence, which is to be minimized:
 
 \begin{equation}
-  D_{\mathrm{KL}} ( a_0 \| \sigma_s(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_s(\psi)_{ij}} \right]
+  D_{\mathrm{KL}} ( a_0 \| \sigma_t(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_t(\psi)_{ij}} \right]
 \end{equation}
 
 
@@ -372,14 +374,14 @@ We have described the loss terms for a source $s$ to target $t$ word alignment. 
   \centering
   \begin{split}
   -\log  p(t & , s | \theta, \psi) = \\
-  - \sum_i^{|s|} & \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_t(\theta(t_j, s_i)) + \log \sigma_t(\psi)_{ij} \right) \right]
+  - \sum_i^{|s|} & \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_s(\theta(t_j, s_i)) + \log \sigma_s(\psi)_{ij} \right) \right]
 \end{split}
 \end{equation}
 
 And now for the KL Divergence term for target $t$ to source $s$:
 
 \begin{equation}
-  D_{\mathrm{KL}} ( a_0 \| \sigma_t(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_t(\psi)_{ij}} \right]
+  D_{\mathrm{KL}} ( a_0 \| \sigma_s(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_s(\psi)_{ij}} \right]
 \end{equation}
 
 Where the normalization of the prior $a_0$ is on the column instead of the row. We also perform the softmax operator on each column of the $\psi$ matrix, previously defined as $\sigma_t(\psi)$
@@ -398,10 +400,10 @@ Our final loss function, to be minimized, is a 5 term equation. We define $a_t$ 
   \centering
 \begin{split}
   Lo&ss = \\
-  &- \sum_j^{|t|} \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_s(\theta(t, s))_{ij} + \log \sigma_s(\psi)_{ij} \right) \right] \\
-  &+ \sum_i^{|s|} \sum_j^{|t|} a_{s_{ij}} \cdot \log \left[ \frac{a_{s_{ij}}}{\sigma_s(\psi)_{ij}} \right] \\
-  &- \sum_i^{|s|} \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_t(\theta(t, s))_{ij} + \log \sigma_t(\psi)_{ij} \right) \right] \\
+  &- \sum_j^{|t|} \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_t(\theta(t, s))_{ij} + \log \sigma_t(\psi)_{ij} \right) \right] \\
   &+ \sum_i^{|s|} \sum_j^{|t|} a_{t_{ij}} \cdot \log \left[ \frac{a_{t_{ij}}}{\sigma_t(\psi)_{ij}} \right] \\
+  &- \sum_i^{|s|} \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_s(\theta(t, s))_{ij} + \log \sigma_s(\psi)_{ij} \right) \right] \\
+  &+ \sum_i^{|s|} \sum_j^{|t|} a_{s_{ij}} \cdot \log \left[ \frac{a_{s_{ij}}}{\sigma_s(\psi)_{ij}} \right] \\
   &- \log \sum_i^{|s|} \sum_j^{|t|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij} \\
 \end{split}
 \end{equation}
