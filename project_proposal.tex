@@ -305,10 +305,10 @@ agreement for both source-to-target and target-to-source embeddings.
 Our model will consist of two parts: the pseudo E-Step prediction network, and
 the pseudo M-Step evaluation (loss) function.
 
-This prediction network accepts two inputs, a target sentence $t$ and source
-sentence $s$. The network will then output an alignment matrix $\psi$, where
+This prediction network accepts two inputs: a target sentence $t$ and a source
+sentence $s$. The network outputs an alignment matrix $\psi$, where
 each row corresponds to a source word $s_i$ and each column corresponds to a
-target word $t_i$. This will help in consistency of future operations.
+target word $t_j$. This will help in consistency of future operations.
 
 \begin{equation}
   \centering
