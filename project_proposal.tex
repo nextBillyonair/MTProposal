@@ -197,6 +197,7 @@ with the generative model parameters $\theta$.
 %------------------------------------------------------------------------------
 
 \section{Original Formulation}
+\label{sec:original-formulation}
 % \todo: shorten or rephrase
 
 IBM Model 1 estimates the translation probabilities of the data through the EM
@@ -294,11 +295,7 @@ We describe our model architecture to learn word alignments, along with
 a combined loss function that will encode alignment by
 agreement for both source-to-target and target-to-source embeddings.
 
-% from a text from achintya, needs work
-% While in VAEs you sample from the distribution, our model's distribution is
-% discrete. Therefore we don’t have to sample and can compute in terms of all
-% possibilities.
-
+% \todo: needs work (says Achintya, via text)
 
 \subsection{Model Description}
 
@@ -324,15 +321,17 @@ s_n  & \psi_{n1} & \hdots & \psi_{nj} & \hdots & \psi_{nm}
 
 The prediction network mimics the E-Step by learning alignments and outputting
 a $\psi$ matrix that can be thought of as a similarity matrix for every target
-word $t_j$ and source word $s_i$. We define the length of the target sentence
+word $t_j$ and source word $s_i$.
+
+We define the length of the target sentence
 $|t| = m$ and the length of the source sentence as $|s|=n$. Hence the $\psi$
-matrix is an $n \times m$ matrix containing measures of similarity between the
+matrix is an $n \times m$ matrix containing measures of similarity between each
 $j$-th target word and $i$-th source word.
 
-We have several ideas on how we can generate this alignment matrix $\psi$:
+We have several ideas on how to generate this alignment matrix $\psi$:
 \begin{enumerate}
-  \item Given a target word embedding $W_t$ and source word embedding $W_s$, we
-    can take the element-wise dot product. So for each $t_j$, $s_i$ pairing:
+  \item Given target word embedding $W_t$ and source word embedding $W_s$,
+  take the element-wise dot product. Then for each $t_j$, $s_i$ pairing:
   \begin{equation}
     \psi_{ij} = W_t[t_j] \cdot W_s[s_i]
   \end{equation}
@@ -369,19 +368,19 @@ We have several ideas on how we can generate this alignment matrix $\psi$:
   \plate [yscale=1.25, yshift=.1cm] {t} {(a)} {} ;
 
 \end{tikzpicture}
-\caption{Model Architecture for Source $s$ to Target $t$ alignments. Neural
-Network Alignment Model $a$ generates alignment matrix $\psi$. $\theta$ are
+\caption{Model Architecture for source $s$ to target $t$ alignments. Neural
+network alignment model $a$ generates alignment matrix $\psi$. $\theta$ are
 learnable translation probabilities. Evaluation function
 $- \log p(t, s | \theta, \psi)$ and KL Divergence $D_{\mathrm{KL}}$ produce our
-loss function to be minimized.}
+loss function (to be minimized).}
 \end{figure}
 
 
-\subsection{Loss Functions}
+\subsection{Loss Function}
 
-To create our loss functions, we convert our alignment matrix $\psi$
-to a probability distribution. Let us define $\sigma(\vec{x})$ to be
-the softmax operator applied on vector $\vec{x}$, and $\sigma(\vec{x})_i$ is
+To create our loss function, we convert our alignment matrix $\psi$
+to a probability distribution. We define $\sigma(\vec{x})$ as
+the softmax operator applied on vector $\vec{x}$, and $\sigma(\vec{x})_i$ as
 the $x_i$ softmax probability for vector $\vec{x}$.
 
 \begin{equation}
@@ -390,7 +389,7 @@ the $x_i$ softmax probability for vector $\vec{x}$.
 
 We therefore define two operations on the alignment matrix $\psi$. For source
 $s$ to target $t$ probability generations, we define $\sigma_t(\psi)$ as the
-softmax on each column, i.e. $t_j$ target word.
+softmax on each column, i.e., target word $t_j$.
 \begin{equation}
   \sigma_t(\psi) = \left[
     \begin{matrix}
@@ -426,24 +425,30 @@ The following subsections describe our loss functions:
 
 \subsubsection{Probability Maximization}
 
-In the original formulation, we maximized probabilities for word
-alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
+In our original formulation (Section \ref{sec:original-formulation}), we
+maximized probabilities for word alignments.
+For this model, we define $p(t, s | \theta, \psi)$ as such:
 
 \begin{equation}
   \begin{split}
   p(t, s | \theta, \psi)
     &= \prod_j^{|t|} \sum_i^{|s|} p_\theta(t_j| s_i) \cdot p_a(i|j) \\
     &= \prod_j^{|t|} \sum_i^{|s|} \sigma_s(\theta(t_j, s_i)) \cdot \sigma_t(\psi)_{ij}
-  \end{split}
+  \end{split}{}
 \end{equation}
 
-This formula stems from the fact that we are assuming the alignments for each
-target word $t_j$ are independent of each other, hence a product over target
-words $t_j$. Then we sum over all the alignment possibilities from the source
-words $s_i$, thus marginalizing over the alignments. For $s \mapsto t$ alignments, alignments are softmaxed per column becuase we hold the target $t$ constant and iterate over the source $s$, hence $\sigma_s$. The translation probabilities are softmaxed per row, or source word $s_i$ since we are given a source word, and want to know whats the probability of translating $s_i$ to the target word $t_j$, hence $\sigma_t$.
+This formula stems from our assumption that the alignments for each
+target word are conditionally independent, hence a product over target
+words $t_j$. We then sum over all the alignment possibilities from the source
+words $s_i$, thus marginalizing over the alignments.
 
-However, we do not maximize in neural networks, and must thus transform this
-equation into a minimization problem by taking the negative logarithm of $p$.
+For $s \mapsto t$ alignments, alignments are softmaxed per column becuase we hold the target $t$ constant and iterate over the source $s$, hence $\sigma_s$.
+
+The translation probabilities are softmaxed per row (i.e., source word $s_i$) since we are given a source word
+and want to know the probability of translating $s_i$ to $t_j$, hence $\sigma_t$.
+
+However, as we do not maximize in neural networks, we must transform this
+equation into a minimization problem by taking the negative log of $p$:
 
 \begin{equation}
   \begin{split}
@@ -454,8 +459,8 @@ equation into a minimization problem by taking the negative logarithm of $p$.
 \end{split}
 \end{equation}
 
-We can simplify this into the below, for easier implementation via PyTorch's
-\texttt{logsumexp} function:
+We can simplify this into the equation below, for easier implementation
+(via PyTorch's \texttt{logsumexp} function):
 
 \begin{equation}
   \centering
@@ -467,7 +472,7 @@ We can simplify this into the below, for easier implementation via PyTorch's
 \end{split}
 \end{equation}
 
-This is the term to be minimized for the source-to-target word alignment
+This is the term to be minimized for our source-to-target word alignment
 generation.
 
 
@@ -482,15 +487,15 @@ $P$ is defined as:
 D_{\mathrm{KL}}(Q \| P) = \sum_{i} Q(i) \log \left( \frac{Q(i)}{P(i)} \right)
 \end{equation}
 
-In other words, it is the expectation of the logarithmic difference between the
+In other words, it is the expectation of the log difference between the
 probabilities $P$ and $Q$, where the expectation is taken using the
 probabilities $Q$.
 
-In order to calculate the KL divergence of our model, we must define
-distributions $P$ and $Q$. First, we consider $P$ as our prior
+To calculate the KL divergence of our model, we must define
+distributions $P$ and $Q$. We first consider $P$ as our prior
 distribution, henceforth called $a_t$. This prior distribution $a_t$ is a
-$n \times m$ matrix filled with the alignment probabilities filled for a source
-word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target
+$n \times m$ matrix filled with the alignment probabilities filled for source
+word $s_i$; target word $t_j$; source sentence $s$ of length $n$; and target
 sentence $t$ of length $m$:
 
 We define distortion exponent $h$ as:
@@ -511,11 +516,16 @@ a_t (i, j) =
    \end{cases}
 \end{equation}
 
-In \cite{dyer2013simple}, parameter values were selected as $\lambda=4$ and $p_0=0.08$
-for the entire corpus. Each element value of $a_t$ is normalized by the sum of the column
-distortion values to create a valid distribution via term $Z_j$ since we hold target $t_j$ constant. For future notation, we say that the subscript on the distirbution $a$ denotes the way we normalize, i.e. $a_t$ is the prior alignemnt distirbution normalized with respect to target words $t_j$ and thus normalized by the sum of the column for $t_j$.
-% TODO change?
-We can then write our KL Divergence, which is to be minimized, as:
+In \cite{dyer2013simple}, parameter values were selected as
+$\lambda = 4$ and $p_0 = 0.08$ for the entire corpus.
+Each element value of $a_t$ is normalized by the sum of the column distortion
+values to create a valid distribution via term $Z_j$ (since we hold target $t_j$ constant). For future notation, let the subscript on the distirbution $a$ denote
+the way we normalize; i.e., $a_t$ is the prior alignemnt distirbution normalized
+with respect to target words $t_j$ and thus normalized by the sum of the column
+for $t_j$.
+
+% \todo: change?
+We can then write our KL Divergence (to be minimized) as:
 
 \begin{equation}
   D_{\mathrm{KL}}(\sigma_t(\psi) \| a_t) =
@@ -527,9 +537,8 @@ We can then write our KL Divergence, which is to be minimized, as:
 \subsubsection{Target-to-Source Loss Terms}
 
 We have described the loss terms for a source $s$ to target $t$ word alignment.
-However, we seek to perform alignment by agreement. Hence, we need to add loss
-functions that describe the evaluation of target $t$ to source $s$. Thus, we
-add terms:
+However, we seek to perform alignment by agreement. Hence, we must add loss
+functions that describe the evaluation of target $t$ to source $s$:
 
 \begin{equation}
   \centering
@@ -543,14 +552,20 @@ add terms:
 \end{split}
 \end{equation}
 
-And now for the KL Divergence term for target $t$ to source $s$:
+\noindent
+Additionally, for the KL Divergence term for target $t$ to source $s$:
 
 \begin{equation}
 D_{\mathrm{KL}} (\sigma_s(\psi) \| a_s) = \sum_i^n \sum_j^m \sigma_s(\psi)_{ij}
   \cdot \log \left[ \frac{\sigma_s(\psi)_{ij}}{a_s(i, j)} \right]
 \end{equation}
 
-Where the normalization of the prior $a_s$ is on the row instead of the column, i.e. we hold the source $s_i$ constant, sum the row, and divide each row element by the sum. The equations for $a_s$ are as follows:
+\noindent
+where the normalization of the prior $a_s$ is on the row instead of the column.
+In other words, we hold the source $s_i$ constant; sum the row; and divide each
+row element by the sum.
+
+The equations for $a_s$ are as follows:
 
 \begin{equation}
   h(i, j) = {-\lambda \left| \frac{i}{n} - \frac{j}{m}\right|}
@@ -570,15 +585,17 @@ a_s (i, j) =
 \end{equation}
 
 We also perform the softmax operator on each column of the $\psi$ matrix,
-previously defined as $\sigma_t(\psi)$
+previously defined as $\sigma_t(\psi)$.
 
 
 \subsubsection{Alignment by Agreement}
 
 Finally, one last loss function term must be added to jointly train each model.
-We define $\circ$ as the Hadamard Product, which is the element wise
+We define $\circ$ as the Hadamard Product, which is the element-wise
 multiplication of two matrices. For instance:
-$(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
+$(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$.
+
+We can write the term as such:
 
 \begin{equation}
   -\log \sum_i^{|s|} \sum_j^{|t|}
@@ -591,12 +608,16 @@ $(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
 
 \subsubsection{Combined Loss Function}
 
-Our final loss function, to be minimized, is a 5-term equation. We define $a_t$
-as the target prior alignment matrix $a_0$ normalized per row with respect to $s$, $a_s$ as the source prior
-alignment matrix normalized per column with respect to $t$, $\sigma_s$ as the softmax operator applied
-on the rows of a matrix, and $\sigma_t$ as the softmax operator applied to each
-column of a matrix. Indexing is done under the assumption that source words
-$s_i$ form rows, and target words $t_j$ form columns, and $ij$ is a shorthand
+Our final loss function, to be minimized, is a 5-term equation. We define:
+\begin{itemize}[label={}]
+  \item $a_t$ as the target prior alignment matrix $a_0$ normalized per row with respect to $s$\\
+  \item $a_s$ as the source prior alignment matrix normalized per column with respect to $t$\\
+  \item $\sigma_s$ as the softmax operator applied on the rows of a matrix\\
+  \item $\sigma_t$ as the softmax operator applied to each column of a matrix
+\end{itemize}
+
+Indexing is done under the assumption that source words $s_i$ form rows
+and target words $t_j$ form columns. The term $ij$ is a shorthand
 for $s_i$ and $t_j$ indexing into our matrices.
 
 \begin{equation}
@@ -728,7 +749,7 @@ Alignment Error Rate (AER) (see
 
 %------------------------------------------------------------------------------
 
-\section{Expectation}
+\section{Evaluation and Expectations}
 
 % Our Hopes and Dreams!
 
