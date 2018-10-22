@@ -95,7 +95,7 @@ Word Alignments}
 We seek to explore the word alignment problem with the help of neural networks.
 More specifically, we want to see if the original Expectation-Maximization
 (EM) approach to word alignment can be transcribed as a neural network in both
-supervised and unsupervised settings.
+supervised and unsupervised settings. % add?
 \end{abstract}
 
 % REMEMBER: IDEA IS TO COPY PROPOSAL INTO FINAL WRITEUP
@@ -105,29 +105,30 @@ supervised and unsupervised settings.
 \section{Introduction}
 
 % \todo: what is our metric?
-Word Alignment seeks to match individual words in a parallel corpus such that
+Word alignment seeks to match individual words in a parallel corpus such that
 the Alignment Error Rate (AER) is minimized. In a previous assignment, we
 implemented IBM Model 1, based on the Expectation-Maximization (EM)
 algorithm. We then implemented a reparametrization of IBM Model 2 that favors
-alignments along the diagonal. Finally, we implemented an
-Alignment by Agreement Model that trained French-to-English and English-to-
-French models and combined the results to produce better alignments.
+alignments along the diagonal \cite{dyer2013simple}. Finally, we implemented an
+Alignment by Agreement model (\cite{liang2006alignment}) that trained
+French-to-English and English-to-French models and combined the results
+to produce better alignments.
 
 Our current proposal is to replace the EM algorithm and
 reparametrization of IBM Model 2 with a neural network architecture. Our new
 model will additionally incorporate Alignment by Agreement. We will use
 PyTorch to build the model and loss functions.
 
-% rephrase
-The key concept lies in defining a loss function that the network will learn
-the optimal parameters to
-learn word alignments from a corpus of parallel text.
+% rephrase sdjfkl
+The key concept lies in defining a loss function for which the network will
+learn the optimal parameters in order to produce accurate word alignments
+from a corpus of parallel text.
 
 %------------------------------------------------------------------------------
 
 \section{Background}
 
-% mention Hasler et al. (2014), BiTAM
+% mention Hasler et al. (2014), BiTAMZ
 Our approach is inspired by current research in topic modeling with Latent
 Dirichlet Allocation (LDA) models. LDA models are generative probabilistic
 models that model topics across distributions of words in a corpus. LDAs are
