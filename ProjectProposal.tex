@@ -388,7 +388,7 @@ Where the normalization of the prior $a_0$ is on the column instead of the row. 
 Finally, one last loss function term must be added to jointly train each model. We define $\circ$ as the Hadamard Product, which is the element wise multiplication of two matrices. For instance: $(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
 
 \begin{equation}
-  -\log \sum_j^{|t|} \sum_i^{|s|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij}
+  -\log \sum_i^{|s|} \sum_j^{|t|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij}
 \end{equation}
 
 \subsubsection{Combined Loss Function}
