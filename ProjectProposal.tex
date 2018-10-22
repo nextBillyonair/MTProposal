@@ -244,7 +244,7 @@ We have several ideas on how we can generate this alignment matrix $\psi$:
   \node[obs, above=0.85cm of a, xshift=-0.6cm] (t) {$t$};
   \node[obs, above=0.85cm of a, xshift=0.6cm]  (s) {$s$};
   \node[latent, below=0.75cm of psi]            (p) {$-\log p(t, s | \theta, \psi)$};
-  \node[latent, left=0.75cm of p]            (kl) {$D_{\mathrm{KL}}(a_0 \| \sigma_s(\psi))$};
+  \node[latent, left=0.75cm of p]            (kl) {$D_{\mathrm{KL}} (  \sigma_t(\psi) \| a_0)$};
   \node[latent, right=0.75cm of psi]            (theta) {$\theta$};
   \node[latent, below=0.95cm of p]            (sum) {$\Sigma$};
   \node[latent, below=0.95cm of sum]            (loss) {$Loss$};
@@ -261,7 +261,7 @@ We have several ideas on how we can generate this alignment matrix $\psi$:
   \plate [yscale=1.25, yshift=.1cm] {t} {(a)} {} ;
 
 \end{tikzpicture}
-\caption{Model Architecture for Target $t$ to Source $s$ alignments. Neural Network Alignment Model $a$ generates alignment matrix $\psi$. $\theta$ are learnable translation probabilites. Evaluation function $- \log p(t, s | \theta, \psi)$ and KL Divergence $D_{\mathrm{KL}}$ produce our loss function to be minimized.}
+\caption{Model Architecture for Source $s$ to Target $t$ alignments. Neural Network Alignment Model $a$ generates alignment matrix $\psi$. $\theta$ are learnable translation probabilites. Evaluation function $- \log p(t, s | \theta, \psi)$ and KL Divergence $D_{\mathrm{KL}}$ produce our loss function to be minimized.}
 \end{figure}
 
 \subsection{Loss Functions}
@@ -284,18 +284,6 @@ We therefore define two operations on the alignment matrix $\psi$. For source $s
 \right]
 \end{equation}
 
-% \begin{equation}
-%   \sigma_s(\psi) = \left[
-%     \begin{matrix}
-%       \sigma(\psi_{s_1})  \\
-%       \vdots \\
-%       \sigma(\psi_{s_i})  \\
-%       \vdots \\
-%       \sigma(\psi_{s_n})  \\
-%     \end{matrix}
-% \right]
-% \end{equation}
-
 In addition, we further define the target to source generation as $\sigma_s(\psi)$, where the softmax operator is applied on each row for target word $s_i$ and produces a row vector.
 \begin{equation}
   \sigma_s(\psi) = \left[
@@ -309,21 +297,7 @@ In addition, we further define the target to source generation as $\sigma_s(\psi
 \right]
 \end{equation}
 
-While in VAEs you would sample from the probability distribution that is returned by the neural network, our model's distribution is discrete. Therefore we don’t have to sample and instead can compute the loss in terms of all possibilities.
-
-% \begin{equation}
-%   \sigma_t(\psi) = \left[
-%     \begin{matrix}
-%       \sigma(\psi_{t_1}) &
-%       \hdots &
-%       \sigma(\psi_{t_j}) &
-%       \hdots &
-%       \sigma(\psi_{t_m})  \\
-%     \end{matrix}
-% \right]
-% \end{equation}
-
-We can now describe our loss functions.
+While in VAEs you would sample from the probability distribution that is returned by the neural network, our model's distribution is discrete. Therefore we don’t have to sample and instead can compute the loss in terms of all possibilities. We can now describe our loss functions.
 
 \subsubsection{Probability Maximization}
 In the original formulation, we were maximizing our probabilites for word alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
