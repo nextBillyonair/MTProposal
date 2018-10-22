@@ -173,19 +173,6 @@ Union = A_{E \rightarrow F} \, \bigcup \, A_{F \rightarrow E}
 \end{equation}
 This effectively gives us an alignment matrix that both models favor strongly, i.e. agree on. From this intersection matrix, we can then use the \texttt{GROW-DIAG-FINAL} algorithm to fill in the remaining gaps from the union of alignments.
 
-
-\section{Our Formulation}
-% basically regurtiate (nicely) what was on board. Maybe make fancy diagrams and stuff.
-% also embeddings, positional, POS tagging, etc.
-
-% refence fig 2
-\subsection{Inspiration}
-We can formulate the word alignment problem as a probabilistic model, similar to LDAs and VAEs.
-
-We want to use neural networks to predict alignments, create complex relations and functions to learn the parameters of the underlying distribution to maximize some likelihood function. We intend to use PyTorch to implement the embedding layers, alignment distribution, and translation weights. In addition, we will encode this likelihood function as a loss function that the network will optimize its parameters for, with respect to the distirbution, formulation, and likelihood function.
-
-\subsection{Alignment Distribution}
-
 \begin{figure}
 \centering
 \begin{tikzpicture}
@@ -209,44 +196,219 @@ We want to use neural networks to predict alignments, create complex relations a
 \caption{Our Probabilistic Plate Diagram for Word Alignment, where $t$ is target, $s$ is source, $\theta$ is the translation model, $\lambda$ is a position distortion parameter, $p_0$ is the null probability, and $a$ is the alignment distribution.}
 \end{figure}
 
-We can describe our alignment distribution as a function of target position $i$, source position $j$, and learnable parameters $\lambda$ and $p_0$. Here we define $\lambda$ as the alignment distortion parameter, and $p_0$ and the probability of aligning to the null token. From Dyer's paper, parameter values were selected as $\lambda=4$ and $p_0=0.08$ for the entire corpus, unlike our formulation which would allow the parameters to be updated via backpropagation. As a result, the alignment distribution $a$ can be formulated as such:
-
-% alignment distirbution, i is target position, j is source position, lambda and null p_0
-\begin{equation}
-a(i, j \, | \, \lambda, p_0) =
-\begin{cases}
-      p_0 & \text{if } null \\
-     (1-p_0) \cdot e^{-\lambda | \frac{i}{m} - \frac{j}{n}|} & \text{else}
-   \end{cases}
-\end{equation}
-
 % talk about NN formulation, see hand notes
-\subsection{Neural Network Architecture}
+\section{Neural Network Architecture}
 
-\subsubsection{Word Embedding}
+We will describe our model architecture to learn word alignments, along with our description of a combined loss function that will encode alignment by agreement for both source to target and target to source embeddings.
 
-\subsubsection{Maximium Likelihood Function}
+% from a text from achintya, needs work
+While in VAEs you sample from the distribution, our model's distribution is discrete. Therefore we don’t have to sample and can compute in terms of all possibilities.
 
+\subsection{Model Description}
 
+Our model will consist of two parts: the pseudo E-Step prediction network, and the pseudo M-Step evauation (loss) function.
 
+This prediciton network accepts two inputs, a target sentence $t$ and source sentence $s$. The network will then output an alignment matrix $\psi$, where each rows corresponds to a source word $s_i$ and each column corresponds to a target word $t_i$. This will help in consistency of future operations.
 
-USEFUL EQUATIONS FOR FUTURE REFERENCE:
-
-Softmax:
 \begin{equation}
-\sigma_i(\vec{x}) = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
-\end{equation}
-Log Softmax: % effectively defines word embedding logprobs?
-\begin{equation}
-\log  \sigma_i(\vec{x})  = x_i - \log \left( \sum_j\exp(x_j) \right)
+  \centering
+\begin{array}{c|ccccc}
+\psi & t_1       & \hdots & t_j       & \hdots & t_m       \\ \hline
+s_1  & \psi_{11} & \hdots & \psi_{1j} & \hdots & \psi_{1m} \\
+\vdots  & \vdots & \ddots & \vdots &  & \vdots \\
+s_i  & \psi_{i1} & \hdots & \psi_{ij} & \hdots & \psi_{im} \\
+\vdots  & \vdots &  & \vdots & \ddots & \vdots \\
+s_n  & \psi_{n1} & \hdots & \psi_{nj} & \hdots & \psi_{nm}
+\end{array}
 \end{equation}
 
-% MIGHT BE USED
-For discrete probability distributions P and Q defined on the same probability space, the Kullback-Leibler (KL) divergence from Q to P is defined to be:
+The prediction network mimics the E-Step by learning alignments and outputing a $\psi$ matrix that can be thought of as a smiliarity matrix for every target word $t_j$ and source word $s_i$. We define the length of the target sentence $|t| = m$ and the length of the source sentence as $|s|=n$. Hence the $\psi$ matrix is an $n \times m$ matrix containing measures of similiarty between the $j$-th target word and $i$-th source word.
+
+We have several ideas on how we can generate this alignment matrix $\psi$:
+\begin{enumerate}
+  \item Given a target word embedding $W_t$ and source word embedding $W_s$, we can take the element-wise dot product. So for each $t_j$, $s_i$ pairing:
+  \begin{equation}
+    \psi_{ij} = W_t[t_j] \cdot W_s[s_i]
+  \end{equation}
+  \item Use word embeddings and bi-directional LSTMs to generate alignment matrix $\psi$ that considers the whole sequence for both sentences.
+  \item Explore deeper, more complex architectures to create a $n \times m$ alignment matrix $\psi$.
+\end{enumerate}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+
+  % Define nodes
+  \node[latent]                               (psi) {$\psi$};
+  \node[latent, above=0.95cm of psi] (a) {$a$};
+  \node[obs, above=0.85cm of a, xshift=-0.6cm] (t) {$t$};
+  \node[obs, above=0.85cm of a, xshift=0.6cm]  (s) {$s$};
+  \node[latent, below=0.75cm of psi]            (p) {$-\log p(t, s | \theta, \psi)$};
+  \node[latent, left=0.75cm of p]            (kl) {$D_{\mathrm{KL}}(a_0 \| \sigma_s(\psi))$};
+  \node[latent, right=0.75cm of psi]            (theta) {$\theta$};
+  \node[latent, below=0.95cm of p]            (sum) {$\Sigma$};
+  \node[latent, below=0.95cm of sum]            (loss) {$Loss$};
+
+  % Connect the nodes
+  \edge {t,s} {a} ; %
+  \edge {a} {psi} ; %
+  \edge {psi} {kl} ; %
+  \edge {psi, theta} {p} ; %
+  \edge {p, kl} {sum} ; %
+  \edge {sum} {loss} ; %
+
+  % Plates
+  \plate [yscale=1.25, yshift=.1cm] {t} {(a)} {} ;
+
+\end{tikzpicture}
+\caption{Model Architecture for Target $t$ to Source $s$ alignments. Neural Network Alignment Model $a$ generates alignment matrix $\psi$. $\theta$ are learnable translation probabilites. Evaluation function $- \log p(t, s | \theta, \psi)$ and KL Divergence $D_{\mathrm{KL}}$ produce our loss function to be minimized.}
+\end{figure}
+
+\subsection{Loss Functions}
+In order to create our loss functions, we have to turn our alignment matrix $\psi$ into a probability distribution. Let us define $\sigma(\vec{x})$ to be the softmax operator applied on vector $\vec{x}$, and $\sigma(\vec{x})_i$ is the $x_i$ softmax probability for vector $\vec{x}$.
+
+\begin{equation}
+\sigma(\vec{x})_i = \frac{\exp(x_i)}{\sum_j\exp(x_j)}
+\end{equation}
+
+We therefore define two operations on the alignment matrix $\psi$. For source $s$ to target $t$ probability generations, we define $\sigma_s(\psi)$ as the softmax on each row, i.e. $s_i$ source word.
+
+\begin{equation}
+  \sigma_s(\psi) = \left[
+    \begin{matrix}
+      \sigma(\psi_{s_1})  \\
+      \vdots \\
+      \sigma(\psi_{s_i})  \\
+      \vdots \\
+      \sigma(\psi_{s_n})  \\
+    \end{matrix}
+\right]
+\end{equation}
+
+In addition, we further define the target to source generation as $\sigma_t(\psi)$, where the softmax operator is applied on each column for target word $t_j$ and produces a column vector.
+\begin{equation}
+  \sigma_t(\psi) = \left[
+    \begin{matrix}
+      \sigma(\psi_{t_1}) &
+      \hdots &
+      \sigma(\psi_{t_j}) &
+      \hdots &
+      \sigma(\psi_{t_m})  \\
+    \end{matrix}
+\right]
+\end{equation}
+
+We can now describe our loss functions.
+
+\subsubsection{Probability Maximization}
+In the original formulation, we were maximizing our probabilites for word alignments. For this model, we define $p(t, s | \theta, \psi)$ as such:
+
+\begin{equation}
+  p(t, s | \theta, \psi) = \prod_j^{|t|} \sum_i^{|s|} \sigma_s(\theta(t_j, s_i)) \cdot \sigma_s(\psi)_{ij}
+\end{equation}
+
+However, we do not maximize in neural networks, and have to transform this equation into a minimization problem by taking the negative logarithm of $p$.
+
+\begin{equation}
+  \begin{split}
+  -\log p(t, & s | \theta, \psi) = \\
+  - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \sigma_s \left( \theta(t_j, s_i) \right) \cdot \sigma_s(\psi)_{ij} \right]
+\end{split}
+\end{equation}
+
+We can simplify this into the below, for easier implmentation via PyTorch's \texttt{logsumexp} function:
+
+\begin{equation}
+  \centering
+  \begin{split}
+  -\log  p(t & , s | \theta, \psi) = \\
+  - \sum_j^{|t|} & \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_s(\theta(t_j, s_i)) + \log \sigma_s(\psi)_{ij} \right) \right]
+\end{split}
+\end{equation}
+
+This is the term to be minized for the source to target word alignment generation.
+
+\subsubsection{KL Divergence and Prior Terms}
+
+We also need to minimize the Kullback-Leibler (KL) divergence between our distribution and a prior. For discrete probability distributions $P$ and $Q$ defined on the same probability space, the KL divergence from $Q$ to $P$ is defined to be:
+
 \begin{equation}
 D _ { \mathrm { KL } } ( P \| Q ) = \sum _ { i } P ( i ) \log \left( \frac { P ( i ) } { Q ( i ) } \right)
 \end{equation}
-In other words, it is the expectation of the logarithmic difference between the probabilities P and Q, where the expectation is taken using the probabilities P.
+
+In other words, it is the expectation of the logarithmic difference between the probabilities $P$ and $Q$, where the expectation is taken using the probabilities $P$.
+
+In order to calulate the KL divergence of our model, we need to define what our distirbutions $P$ and $Q$ are. First, we will consider $P$ as our prior distribution, henceforth called $a_0$. Our prior distribution $a_0$ is a $n \times m$ matrix filled with the alignment probabilities filled for a source word $s_i$, target word $t_j$, source sentence $s$ of length $n$, and target sentence $t$ of length $m$:
+
+We define distortion exponent $h$ as:
+\begin{equation}
+  h(i, j) = {-\lambda \left| \frac{i}{n} - \frac{j}{m}\right|}
+\end{equation}
+
+\begin{equation}
+  Z_i = \sum_{j'} \exp h(i, j')
+\end{equation}
+
+\begin{equation}
+a_0 (i, j) =
+\begin{cases}
+      p_0 & \text{if } null \\
+     (1-p_0) \cdot \frac{e^{h(i,j)}}{Z_i} & \text{else}
+   \end{cases}
+\end{equation}
+
+From Dyer's paper, parameter values were selected as $\lambda=4$ and $p_0=0.08$ for the entire corpus. Each row of $a_0$ is normalized by the sum of the row distortion values to create a valid distribution via term $Z_i$ \cite{dyer2013simple}. We can then write our KL Divergence, which is to be minimized:
+
+\begin{equation}
+  D_{\mathrm{KL}} ( a_0 \| \sigma_s(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_s(\psi)_{ij}} \right]
+\end{equation}
+
+
+
+\subsubsection{Source to Target Loss Terms}
+We have described the loss terms for a source $s$ to target $t$ word alignment. However, we seek to perfrom alignment by agreement. Hence we need to add loss functions that describe the evaluation of target $t$ to source $s$. Hence, we add terms:
+
+\begin{equation}
+  \centering
+  \begin{split}
+  -\log  p(t & , s | \theta, \psi) = \\
+  - \sum_i^{|s|} & \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_t(\theta(t_j, s_i)) + \log \sigma_t(\psi)_{ij} \right) \right]
+\end{split}
+\end{equation}
+
+And now for the KL Divergence term for target $t$ to source $s$:
+
+\begin{equation}
+  D_{\mathrm{KL}} ( a_0 \| \sigma_t(\psi) ) = \sum_i^n \sum_j^m a_0(i, j) \cdot \log \left[ \frac{a_0(i, j)}{\sigma_t(\psi)_{ij}} \right]
+\end{equation}
+
+Where the normalization of the prior $a_0$ is on the column instead of the row. We also perform the softmax operator on each column of the $\psi$ matrix, previously defined as $\sigma_t(\psi)$
+
+\subsubsection{Alignment by Agreement}
+Finally, one last loss function term must be added to jointly train each model. We define $\circ$ as the Hadamard Product, which is the element wise multiplication of two matrices. For instance: $(A \circ B)_{ij} = A_{ij} \cdot B_{ij}$. We can write the term as such:
+
+\begin{equation}
+  -\log \sum_j^{|t|} \sum_i^{|s|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij}
+\end{equation}
+
+\subsubsection{Combined Loss Function}
+Our final loss function, to be minimized, is a 5 term equation. We define $a_t$ as the prior alignment matrix $a_0$ normalized per column, $a_s$ as the prior alignment matrix normalized per row, $\sigma_s$ as the softmax operator applied on the rows of a matrix, and $\sigma_t$ as the softmax operator applied to each column of a matrix. Indexing is done under the assumption that source words $s_i$ form rows, and target words $t_j$ form columns, and $ij$ is a shorthand for $s_i$ and $t_j$ indexing into our matricies.
+
+\begin{equation}
+  \centering
+\begin{split}
+  Lo&ss = \\
+  &- \sum_j^{|t|} \log \left[ \sum_i^{|s|} \exp \left( \log \sigma_s(\theta(t, s))_{ij} + \log \sigma_s(\psi)_{ij} \right) \right] \\
+  &+ \sum_i^{|s|} \sum_j^{|t|} a_{s_{ij}} \cdot \log \left[ \frac{a_{s_{ij}}}{\sigma_s(\psi)_{ij}} \right] \\
+  &- \sum_i^{|s|} \log \left[ \sum_j^{|t|} \exp \left( \log \sigma_t(\theta(t, s))_{ij} + \log \sigma_t(\psi)_{ij} \right) \right] \\
+  &+ \sum_i^{|s|} \sum_j^{|t|} a_{t_{ij}} \cdot \log \left[ \frac{a_{t_{ij}}}{\sigma_t(\psi)_{ij}} \right] \\
+  &- \log \sum_i^{|s|} \sum_j^{|t|} \left[ \sigma_s(\psi) \circ \sigma_t(\psi) \right]_{ij} \\
+\end{split}
+\end{equation}
+
+\subsection{Prediction}
+
+For prediciton, we can set a threshold for our alignment matrix $\psi$ and take it as our alignemnts.
 
 \section{Data}
 % talk about subtitle extraction. Also labeling of data for supervised? Or should that go in supervised trainign section. Get Bailey to metnion Nikita metric for baseline on unaligned corpus.
@@ -266,15 +428,6 @@ In other words, it is the expectation of the logarithmic difference between the 
 \section{Expectation}
 % Our Hopes and Dreams!
 
-
-\begin{equation}
-\centering
-\begin{split}
-\textit{le chat} &\mapsto \textit{the cat} \\
-\textit{est} &\mapsto \textit{is} \\
-\textit{noir} &\mapsto \textit{black} \\
-\end{split}
-\end{equation}
 
 % References
 \bibliographystyle{abbrv}
