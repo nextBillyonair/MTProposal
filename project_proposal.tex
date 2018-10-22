@@ -128,17 +128,49 @@ from a corpus of parallel text.
 
 \section{Background}
 
-% mention Hasler et al. (2014), BiTAMZ
+Neural Machine Translation (NMT), particularly attention-based NMT, has
+increasingly achieved successful results regarding machine translation tasks
+\cite{bahdanau2014neural}. However, the attention mechanisms in neural networks
+yield less accurate results than conventional alignment models.
+\cite{liu2016neural} and \cite{chen2016guided} have improved upon these results
+by using guided alignment training (i.e., supervised training) based on
+alignments produced by statistical machine translation
+(e.g., fast-align \cite{dyer2013simple}).
+
+% \cite{koehn2019neural} emphasizes the need for an effective alignment
+% mechanism between source and target words.
+
 Our approach is inspired by current research in topic modeling with Latent
-Dirichlet Allocation (LDA) models. LDA models are generative probabilistic
-models that model topics across distributions of words in a corpus. LDAs are
-based on variational methods and EM for Bayes parameter estimation.
+Dirichlet Allocation (LDA), which is based on variational methods
+and EM for Bayes parameter estimation \cite{blei2003latent}.
+\cite{hasler2014dynamic} present a bilingual variant of LDA, called
+``phrasal LDA,'' for phrase-based machine translation.
+
+We additionally draw inspiration from the Autoencoding Variational Bayes (AEVB)
+algorithm, particularly as instantiated by the Variational Autoencoder (VAE).
+Based on variational inference, AEVB increases efficiency w.r.t. inference and
+learning by optimizing a recognition model to approximate posterior
+distributions; VAEs use a neural network for this recognition model \cite{kingma2013auto}.
+\cite{srivastava2017autoencoding} present an AEVB-based inference method for
+LDA, referred to as Autoencoded Variational Inference for Topic Model (AVITM).
+
+% VAEs are notable as a popular approach to unsupervised learning and have the
+% benefit of being built on neural networks % +trainable via stoch. grad. descent
+
+
+% LDA models are generative probabilistic models that model topics across
+% distributions of words in a corpus. LDAs are based on variational methods
+% and EM for Bayes parameter estimation.
 
 % expand this section, and say that the work is inspiration to our approach
 % applying a NN to approximate the posterior distributions.
 % see apibm - apply tech to lda.
-\cite{blei2003latent}
-\cite{kingma2013auto}
+
+% Current research attempts to supplant the probabilistic modeling with a
+% neural network architecture.
+
+% Expand discussion on VAE and similarity to our proposal. Maybe include VAE
+% diagram.
 
 % INSERT GRAPHIC OF PLATE DIAGRAM FOR LDA HERE!
 % Also cite LDA paper.
@@ -153,14 +185,6 @@ The boxes are ``plates'' representing replicates. The outer plate represents
 documents, while the inner plate represents the repeated choice of topics and
 words within a document.}
 \end{figure*}
-
-Current research attempts to supplant the probabilistic modeling with a neural
-network architecture.
-
-Additional inspiration comes from Variational Auto-Encoders (VAE).
-
-% Expand discussion on VAE and similarity to our proposal. Maybe include VAE
-% diagram.
 
 %------------------------------------------------------------------------------
 
