@@ -589,6 +589,71 @@ it as our alignments.
 % should that go in supervised training section. Get Bailey to mention Nikita
 % metric for baseline on unaligned corpus.
 
+
+\subsection{Introduction}
+
+The efficacy of a neural network alignment system depends heavily on the
+quality and quantity of the training data available. We look to leverage
+existing corpora of natural language in various settings instead of the
+traditional corpora (such as the Europal, which are domain specific and lack
+the unstructured and informal nature of typical language use). Training on
+these commonly used corpora leads to models with preferences for emitting
+language of a parliamentary nature, for example. We elect to focus on corpora
+that provide more of a contextual breadth.
+
+To this end, amassed a corpus of domestic and international movie and TV show
+subtitles from a variety of sources. Subtitles have the unique advantage of
+being already sentence-aligned thanks to timestamps. Additionally, this
+alignment somewhat holds even if timestamps are skewed between different media
+formats of the same source with slightly different timings. We plan to handle
+subtitles in strict alignment (that is, those whose timestamps exactly
+correspond) and also will attempt to sentence-align those that are in fuzzy
+alignment (timestamps do not correspond one-to-one). For more on our
+methodology, see \hyperref[subsec:subtitle-alignment]{Subtitle Alignment}.
+
+Our preference was to collect only professional or official subtitles, but
+unfortunately these fall under copyright law and are often not publicly
+available. However, there are communities of volunteer transcribers and
+translators from which we can obtain unofficial subtitles. Many of these
+communities have databases with publicly available dumps of all translations,
+offer an API, or have a website that is scrapeable. We have employed these
+tactics to obtain an initial corpus (see
+\hyperref[subsec:procuring-subtitles]{Procuring Subtitles}).
+
+For evaluating the effectiveness of our model and to facilitate
+\hyperref[sec:supervised-training]{Supervised Training} we need ground truth
+alignments of some subset of our corpus. As we later discuss, or corpus
+currently has 90 million English-French aligned subtitles (each approximately
+consisting of one sentence). This is, of course, impractical to align by hand
+even with significant resources. So, we are presented with a similar evaluation
+problem that that in Liu et al. \cite{liu2015streaming}. However, instead of
+the ground truth being intractable, our ground truth is impractical to compute.
+We elect to obtain ground truth alignments by a similar consensus based
+approach to that in \cite{liu2015streaming}. Broadly, we look to well-known
+open-source alignment software en masse to provide an approximation of the
+ground truth alignments. We do so by evaluating the pairwise overlap between
+each aligner and our model to determine a metric that can approximate
+Alignment Error Rate (AER) (see
+\hyperref[subsec:ground-truth-alignments]{Ground Truth Alignments}).
+
+
+\subsection{Procuring Subtitles}
+\label{subsec:procuring-subtitles}
+
+% TODO
+
+
+\subsection{Subtitle Alignment}
+\label{subsec:subtitle-alignment}
+
+% TODO
+
+
+\subsection{Ground Truth Alignments}
+\label{subsec:ground-truth-alignments}
+
+% TODO
+
 %------------------------------------------------------------------------------
 
 \section{Training}
@@ -597,6 +662,7 @@ it as our alignments.
 
 
 \subsection{Supervised Training}
+\label{sec:supervised-training}
 
 % Cut out top part of model, talk about how we will label our data and
 % incorporate
